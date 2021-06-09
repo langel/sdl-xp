@@ -66,6 +66,7 @@ int main(int argc, char *argv[]) {
 		for (int j = 0; j < 666; j++) {
 			int x = rng(SCREEN_WIDTH);
 			int y = rng(SCREEN_HEIGHT);
+			rng(0);
 			i = rng(256);
 			SDL_SetRenderDrawColor(renderer, colors[i].r, colors[i].g, colors[i].b, colors[i].a);
 			SDL_RenderDrawPoint(renderer, x, y);
