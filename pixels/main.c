@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
 
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT, 0, &window, &renderer);
-	SDL_SetWindowTitle(window, "pixels 00");
+	SDL_SetWindowTitle(window, "pixels 02");
 
 	SDL_Color colors[256];
 	for (i = 0; i < 256; i++) {
@@ -64,8 +64,8 @@ int main(int argc, char *argv[]) {
 
 		// random pixel
 		for (int j = 0; j < 666; j++) {
-			int x = rng(SCREEN_WIDTH);
-			int y = rng(SCREEN_HEIGHT);
+			int x = (rng(SCREEN_WIDTH) + j) % SCREEN_WIDTH;
+			int y = (rng(SCREEN_HEIGHT) + j) % SCREEN_HEIGHT;
 			rng(0);
 			i = rng(256);
 			SDL_SetRenderDrawColor(renderer, colors[i].r, colors[i].g, colors[i].b, colors[i].a);
