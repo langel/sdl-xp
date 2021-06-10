@@ -42,11 +42,32 @@ int main(int argc, char *argv[]) {
 	SDL_Event event;
 	SDL_Renderer *renderer;
 	SDL_Window *window;
-	int i;
+	int i, j, x, y;
 
 	SDL_Init(SDL_INIT_VIDEO);
-	SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT, 0, &window, &renderer);
-	SDL_SetWindowTitle(window, "pixels 02");
+
+	int display_last_id = SDL_GetNumVideoDisplays();
+	printf("displays %d \n", display_last_id);
+	display_last_id--;
+	SDL_Rect display_bounds;
+	SDL_GetDisplayUsableBounds(display_last_id, &display_bounds);
+	if (SDL_GetDisplayBounds(display_last_id, &display_bounds) != 0) {
+	    SDL_Log("SDL_GetDisplayBounds failed: %s", SDL_GetError());
+	}
+	x = display_bounds.x + (display_bounds.w - SCREEN_WIDTH) / 2;
+	y = display_bounds.y + (display_bounds.h - SCREEN_HEIGHT) / 2;
+	
+	printf("rx %d \n", display_bounds.x);
+	printf("ry %d \n", display_bounds.y);
+	printf("rw %d \n", display_bounds.w);
+	printf("rh %d \n", display_bounds.h);
+	printf("x %d \n", x);
+	printf("y %d \n", y);
+
+	window = SDL_CreateWindow("pixels 03", x, y, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
+	renderer = SDL_CreateRenderer(window, 0, 0);
+//	SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT, 0, &window, &renderer);
+//	SDL_SetWindowTitle(window, "pixels 02");
 
 	SDL_Color colors[256];
 	for (i = 0; i < 256; i++) {
@@ -57,15 +78,16 @@ int main(int argc, char *argv[]) {
 
 	}
 	//SDL_SetPalette(screen, SDL_LOGPAL|SDL_PHYSPAL, colors, 0, 256);
-	printf("pixels\n");
+	// a little debug
+	//printf("pixels\n");
 
 	int running = 1;
 	while (running) {
 
 		// random pixel
-		for (int j = 0; j < 666; j++) {
-			int x = (rng(SCREEN_WIDTH) + j) % SCREEN_WIDTH;
-			int y = (rng(SCREEN_HEIGHT) + j) % SCREEN_HEIGHT;
+		for (j = 0; j < 666; j++) {
+			x = (rng(SCREEN_WIDTH) + j) % SCREEN_WIDTH;
+			y = (rng(SCREEN_HEIGHT) + j) % SCREEN_HEIGHT;
 			rng(0);
 			i = rng(256);
 			SDL_SetRenderDrawColor(renderer, colors[i].r, colors[i].g, colors[i].b, colors[i].a);
