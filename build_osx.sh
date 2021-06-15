@@ -1,2 +1,4 @@
 #!/bin/bash
-gcc -o main main.c -lSDL2
+
+gcc -o main.app main.c -lSDL2
+./main.app

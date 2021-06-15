@@ -9,9 +9,10 @@ int FPS = 60;
 float samples_per_sine;
 
 void audio_callback(void* userdata, Uint8* buffer, int len) {
+	//printf(" %d ", len);
 	static long pos = 0;
 	for (int i = 0; i < len; ++i) {
-		buffer[i] = sin(pos / samples_per_sine * M_PI * 2);
+		buffer[i] = sin((pos / samples_per_sine) * M_PI * 2);
 		pos++;
 	}
 }
@@ -57,6 +58,7 @@ int main(int argc, char *argv[]) {
 	log_spec(&have);
 
 	SDL_Delay(42);
+	//SDL_LockAudioDevice(audio_device);
 	SDL_PauseAudioDevice(audio_device, 0);
 	samples_per_sine = (float)have.freq / 420.0;
 
@@ -70,6 +72,10 @@ int main(int argc, char *argv[]) {
 		}
 
 	}
+
+	//SDL_UnlockAudioDevice(audio_device);
+	SDL_CloseAudio();
+	SDL_Quit();
 
 	return 0;
 
