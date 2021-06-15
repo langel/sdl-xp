@@ -1,41 +1,12 @@
 #include <math.h>
 #include <stdio.h>
 #include "SDL2/SDL.h"
+#include "lib/rng-lfsr.h"
 
 int SCREEN_WIDTH = 600;
 int SCREEN_HEIGHT = 800;
 int FPS = 60;
 
-/*
-
-int rng(int max) { 
-	static int seed = 1000;
-	double base = fabs(sin(seed*=3));
-	int whole = (int)base;
-	printf("color red %f \n", base);
-	return (int)((base - whole) * max);
-}
-*/
-
-short xorshift16() {
-	static unsigned short x = 1;
-//	x |= x == 0;   // if x == 0, set x = 1 instead
-	x ^= (x & 0x07ff) << 5;
-	x ^= x >> 7;
-	x ^= (x & 0x0003) << 14;
-	return x & 0xffff;
-}
-
-int rng(int max) {
-	unsigned short temp = xorshift16();
-	/*
-	printf("rng %d \n", max);
-	printf("rng %d \n", temp);
-	printf("rng %f \n", (float)temp / (float)0xffff);
-	printf("rng %f \n", (float) (temp / (float)0xffff) * (float)max);
-	*/
-	return (int)( ( (float) temp / (float) 0xffff) * (float) max );
-}
 
 int main(int argc, char *argv[]) {
 
@@ -57,39 +28,35 @@ int main(int argc, char *argv[]) {
 	x = display_bounds.x + (display_bounds.w - SCREEN_WIDTH) / 2;
 	y = display_bounds.y + (display_bounds.h - SCREEN_HEIGHT) / 2;
 	
-	printf("rx %d \n", display_bounds.x);
-	printf("ry %d \n", display_bounds.y);
-	printf("rw %d \n", display_bounds.w);
-	printf("rh %d \n", display_bounds.h);
-	printf("x %d \n", x);
-	printf("y %d \n", y);
-
 	window = SDL_CreateWindow("pixels 03", x, y, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 	renderer = SDL_CreateRenderer(window, 0, 0);
-//	SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT, 0, &window, &renderer);
-//	SDL_SetWindowTitle(window, "pixels 02");
 
 	SDL_Color colors[256];
 	for (i = 0; i < 256; i++) {
-		colors[i].r = rng(i);
-		colors[i].g = rng(i);
-		colors[i].b = rng(i);
+		colors[i].r = rng16(i);
+		colors[i].g = rng16(i);
+		colors[i].b = rng16(i);
 		colors[i].a = 255;
 
 	}
-	//SDL_SetPalette(screen, SDL_LOGPAL|SDL_PHYSPAL, colors, 0, 256);
-	// a little debug
-	//printf("pixels\n");
+
+/*
+	unsigned short rng_seed = 1;
+	printf("rng_seed %d \n", rng_seed);
+	int rng_no = rng_lfsr_16bit_next(&rng_seed, 50);
+	printf("rng = %d \n", rng_no);
+	printf("rng_seed %d \n", rng_seed);
+*/
 
 	int running = 1;
 	while (running) {
 
 		// random pixel
 		for (j = 0; j < 666; j++) {
-			x = (rng(SCREEN_WIDTH) + j) % SCREEN_WIDTH;
-			y = (rng(SCREEN_HEIGHT) + j) % SCREEN_HEIGHT;
-			rng(0);
-			i = rng(256);
+			x = (rng8(SCREEN_WIDTH) + j) % SCREEN_WIDTH;
+			y = (rng8(SCREEN_HEIGHT) + j) % SCREEN_HEIGHT;
+			rng16(0);
+			i = rng16(256);
 			SDL_SetRenderDrawColor(renderer, colors[i].r, colors[i].g, colors[i].b, colors[i].a);
 			SDL_RenderDrawPoint(renderer, x, y);
 			//printf("color id %d \n", i);
