@@ -18,8 +18,9 @@ void audio_callback(void* userdata, uint8_t* byte_stream, int byte_stream_length
 	float* float_stream = (float*) byte_stream;
 	uint32_t i;
 	uint32_t float_stream_length = byte_stream_length >> 2;
-	for (i = 0; i < float_stream_length; ++i) {
+	for (i = 0; i < float_stream_length; i+=2) {
 		float_stream[i] = sin((pos / samples_per_sine) * TAO) * 0.25;
+		float_stream[i+1] = sin((pos / samples_per_sine) * TAO) * 0.25;
 		pos++;
 	}
 }
@@ -48,12 +49,12 @@ int main(int argc, char *argv[]) {
 	SDL_AudioSpec want, have;
 	SDL_AudioDeviceID audio_device;
 
-	uint32_t sample_freq = sample_freq_common[0];
+	uint32_t sample_freq = sample_freq_common[6];
 
 	SDL_memset(&want, 0, sizeof(want));
 	want.freq = sample_freq;
 	want.format = AUDIO_F32SYS;
-	want.channels = 1;
+	want.channels = 2;
 	want.samples = 1024;
 	want.callback = audio_callback;
 	audio_device = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
