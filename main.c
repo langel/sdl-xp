@@ -92,15 +92,17 @@ int main(int argc, char *argv[]) {
 	display_last_id--;
 	SDL_Rect display_bounds;
 	SDL_GetDisplayUsableBounds(display_last_id, &display_bounds);
+	/*
 	if (SDL_GetDisplayBounds(display_last_id, &display_bounds) != 0) {
 	    SDL_Log("SDL_GetDisplayBounds failed: %s", SDL_GetError());
 	}
+	*/
 	x = display_bounds.x + (display_bounds.w - SCREEN_WIDTH) / 2;
 	y = display_bounds.y + (display_bounds.h - SCREEN_HEIGHT) / 2;
 
 	x_min = display_bounds.x;
 	x_max = display_bounds.x + display_bounds.w - SCREEN_WIDTH - 1;
-	x_dir = 1;
+	x_dir = 2;
 	x_pos = x;
 	y_pos = y;
 
@@ -158,8 +160,8 @@ int main(int argc, char *argv[]) {
 		SDL_RenderPresent(renderer);
 
 		x_pos += x_dir;
-		if (x_pos >= x_max) x_dir = -1;
-		if (x_pos <= x_min) x_dir = 1;
+		if (x_pos >= x_max) x_dir = -x_dir;
+		if (x_pos <= x_min) x_dir = -x_dir;
 	
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
