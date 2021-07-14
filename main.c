@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
 		SDL_SetRenderDrawColor(renderer, 8, 111, 8, 200);
 		for (j = 0; j < SCREEN_WIDTH; j++) {
 			x = j + x_pos;
-			y = (int)(SCREEN_HEIGHT >> 1) + (sin(x / samples_per_sine) * (SCREEN_HEIGHT >> 2));
+			y = (int)(SCREEN_HEIGHT >> 1) + (int)(sin(x / samples_per_sine) * (SCREEN_HEIGHT >> 2));
 			SDL_RenderDrawPoint(renderer, j, y);
 			SDL_RenderDrawPoint(renderer, j, y + 1);
 			SDL_RenderDrawPoint(renderer, j, y + 2);
