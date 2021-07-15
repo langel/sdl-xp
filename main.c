@@ -2,11 +2,16 @@
 #include <stdio.h>
 #include "SDL2/SDL.h"
 #include "lib/rng-lfsr.h"
-#include "fcl/fcl_audio.h"
+#include "fcl/fcl.h"
 
-int SCREEN_WIDTH = 420;
-int SCREEN_HEIGHT = 200;
+int SCREEN_WIDTH = 600;
+int SCREEN_HEIGHT = 800;
 int FPS = 60;
+
+int CANVAS_WIDTH = 420;
+int CANVAS_HEIGHT = 200;
+int WINDOW_WIDTH = 860;
+int WINDOW_HEIGHT = 540;
 
 
 int main(int argc, char *argv[]) {
@@ -63,6 +68,8 @@ int main(int argc, char *argv[]) {
 
 	fcl_audio_init();
 	fcl_audio_set_sine_freq(sine_freq);
+
+	fcl_time_set_fps(48);
 
 	int running = 1;
 	while (running) {
@@ -123,8 +130,9 @@ int main(int argc, char *argv[]) {
 					fcl_audio_set_sine_freq(sine_freq);
 					break;
 			}
-			SDL_Delay(1);
 		}
+
+		fcl_time_wait_next_frame();
 
 	}
 

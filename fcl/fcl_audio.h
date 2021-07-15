@@ -34,7 +34,7 @@ void fcl_audio_set_sine_pan(float pan) {
 	vol_right = 1 - vol_left;
 }
 
-void log_spec(SDL_AudioSpec *as) {
+void fcl_audio_log_spec(SDL_AudioSpec *as) {
 	printf(
 		" freq______%5d\n"
 		" format____%5d\n"
@@ -69,9 +69,9 @@ void fcl_audio_init() {
 		SDL_Log("Failed to open audio: %s\n", SDL_GetError());
 	}
 	printf(" want spec:\n");
-	log_spec(&want);
+	fcl_audio_log_spec(&want);
 	printf(" have spec:\n");
-	log_spec(&have);
+	fcl_audio_log_spec(&have);
 	sample_freq = have.freq;
 
 	// XXX why is this here?
