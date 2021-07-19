@@ -4,9 +4,7 @@
 #include "lib/rng-lfsr.h"
 #include "fcl/fcl.h"
 
-int SCREEN_WIDTH = 600;
-int SCREEN_HEIGHT = 800;
-int FPS = 60;
+int FPS = 48;
 
 int CANVAS_WIDTH = 420;
 int CANVAS_HEIGHT = 200;
@@ -21,11 +19,12 @@ int main(int argc, char *argv[]) {
 	SDL_Event event;
 	SDL_Renderer *renderer;
 	SDL_Window *window;
+	SDL_Texture *texture;
 
 	SDL_Rect window_rect;
 	window_rect.x = window_rect.y = 0;
-	window_rect.w = SCREEN_WIDTH;
-	window_rect.h = SCREEN_HEIGHT;
+	window_rect.w = WINDOW_WIDTH;
+	window_rect.h = WINDOW_HEIGHT;
 
 	int i, j, x, y;
 	int x_min, x_max, x_dir, x_pos, y_pos;
@@ -40,11 +39,11 @@ int main(int argc, char *argv[]) {
 	    SDL_Log("SDL_GetDisplayBounds failed: %s", SDL_GetError());
 	}
 	*/
-	x = display_bounds.x + (display_bounds.w - SCREEN_WIDTH) / 2;
-	y = display_bounds.y + (display_bounds.h - SCREEN_HEIGHT) / 2;
+	x = display_bounds.x + (display_bounds.w - WINDOW_WIDTH) / 2;
+	y = display_bounds.y + (display_bounds.h - WINDOW_HEIGHT) / 2;
 
 	x_min = display_bounds.x;
-	x_max = display_bounds.x + display_bounds.w - SCREEN_WIDTH - 1;
+	x_max = display_bounds.x + display_bounds.w - WINDOW_WIDTH - 1;
 	x_dir = 2;
 	x_pos = x;
 	y_pos = y;
@@ -52,24 +51,19 @@ int main(int argc, char *argv[]) {
 	printf("min x %d\n", x_min);
 	printf("max x %d\n", x_max);
 
-	window = SDL_CreateWindow("sine420panning", x, y, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
+	window = SDL_CreateWindow("sine420panning", x, y, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
 	renderer = SDL_CreateRenderer(window, 0, 0);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-
-
-	SDL_Color colors[256];
-	for (i = 0; i < 256; i++) {
-		colors[i].r = rng16(i);
-		colors[i].g = rng16(i);
-		colors[i].b = rng16(i);
-		colors[i].a = 255;
-
-	}
 
 	fcl_audio_init();
 	fcl_audio_set_sine_freq(sine_freq);
 
-	fcl_time_set_fps(48);
+	fcl_time_set_fps(FPS);
+	fcl_video_set_dimensions(CANVAS_WIDTH, CANVAS_HEIGHT);
+	for (i = 0; i < 255; i++) {
+		fcl_video_set_color_index(i, rng16(i), rng16(i), rng16(i));
+	}
+	fcl_video_set_color_index(255, 8, 111, 8);
 
 	int running = 1;
 	while (running) {
@@ -80,18 +74,22 @@ int main(int argc, char *argv[]) {
 
 		// draw sine
 		SDL_SetRenderDrawColor(renderer, 8, 111, 8, 200);
-		for (j = 0; j < SCREEN_WIDTH; j++) {
+		for (j = 0; j < CANVAS_WIDTH; j++) {
 			x = j + x_pos;
-			y = (int)(SCREEN_HEIGHT >> 1) + (int)(sin(x / samples_per_sine) * (SCREEN_HEIGHT >> 2));
+			y = (int)(CANVAS_HEIGHT >> 1) + (int)(sin(x / samples_per_sine) * (CANVAS_HEIGHT >> 2));
+			fcl_video_set_pixel(j, y, 255);
+			/*
 			SDL_RenderDrawPoint(renderer, j, y);
 			SDL_RenderDrawPoint(renderer, j, y + 1);
 			SDL_RenderDrawPoint(renderer, j, y + 2);
+			*/
+			
 		}
 
 		// random pixels
 		for (j = 0; j < 666; j++) {
-			x = (rng8(SCREEN_WIDTH) + j) % SCREEN_WIDTH;
-			y = (rng8(SCREEN_HEIGHT) + j) % SCREEN_HEIGHT;
+			x = (rng8(WINDOW_WIDTH) + j) % WINDOW_WIDTH;
+			y = (rng8(WINDOW_HEIGHT) + j) % WINDOW_HEIGHT;
 			rng16(0);
 			i = rng16(256);
 			SDL_SetRenderDrawColor(renderer, colors[i].r, colors[i].g, colors[i].b, 255);
