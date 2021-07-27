@@ -55,3 +55,6 @@ placeholder text for ideas around this project
 	- background/foreground tiling layers?
 	- fps setting (affects game/audio loops? probably!)
 	- retro shader effects (CRT curve / scanlines)
+
+## Inputs
+- read controller without window focus

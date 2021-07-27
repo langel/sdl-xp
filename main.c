@@ -84,8 +84,9 @@ int main(int argc, char *argv[]) {
 			y = (rng8(WINDOW_HEIGHT) + j) % WINDOW_HEIGHT;
 			rng16(0);
 			i = rng16(256);
-			SDL_SetRenderDrawColor(renderer, colors[i].r, colors[i].g, colors[i].b, 255);
-			SDL_RenderDrawPoint(renderer, x, y);
+			fcl_video_set_draw_color(i);
+			fcl_video_set_pixel(x, y, i);
+			//SDL_RenderDrawPoint(renderer, x, y);
 		}
 
 		// pan audio

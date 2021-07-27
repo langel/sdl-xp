@@ -17,15 +17,9 @@ int16_t fcl_window_pos_y_max;
 int16_t fcl_window_pos_y_min;
 
 void fcl_window_init() {
-	fcl_window_display_count = SDL_GetNymVideoDisplays();
+	fcl_window_display_count = SDL_GetNumVideoDisplays();
 	// XXX temporarily use last display
-	SDL_GetDisplay_UsableBounds(fcl_window_display_count - 1, &fcl_window_display_bounds);
-}
-
-void fcl_window_center() {
-	int16_t pos_x = fcl_window_display_bounds.x + (fcl_window_display_bounds.w - fcl_window_width) / 2;
-	int16_t pos_y = fcl_window_display_bounds.y + (fcl_window_display_bounds.h - fcl_window_height) / 2;
-	fcl_window_set_position(pos_x, pos_y);
+	SDL_GetDisplayUsableBounds(fcl_window_display_count - 1, &fcl_window_display_bounds);
 }
 
 void fcl_window_create(const char *title, int16_t pos_x, int16_t pos_y, uint16_t width, uint16_t height) {
@@ -44,4 +38,10 @@ void fcl_window_create(const char *title, int16_t pos_x, int16_t pos_y, uint16_t
 
 void fcl_window_set_position(int16_t pos_x, int16_t pos_y) {
 	SDL_SetWindowPosition(fcl_window_object, pos_x, pos_y);
+}
+
+void fcl_window_center() {
+	int16_t pos_x = fcl_window_display_bounds.x + (fcl_window_display_bounds.w - fcl_window_width) / 2;
+	int16_t pos_y = fcl_window_display_bounds.y + (fcl_window_display_bounds.h - fcl_window_height) / 2;
+	fcl_window_set_position(pos_x, pos_y);
 }
