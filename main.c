@@ -29,30 +29,22 @@ int main(int argc, char *argv[]) {
 	int i, j, x, y;
 	int x_min, x_max, x_dir, x_pos, y_pos;
 
-	int display_last_id = SDL_GetNumVideoDisplays();
-	printf("displays %d \n", display_last_id);
-	display_last_id--;
-	SDL_Rect display_bounds;
-	SDL_GetDisplayUsableBounds(display_last_id, &display_bounds);
-	/*
-	if (SDL_GetDisplayBounds(display_last_id, &display_bounds) != 0) {
-	    SDL_Log("SDL_GetDisplayBounds failed: %s", SDL_GetError());
-	}
-	*/
-	x = display_bounds.x + (display_bounds.w - WINDOW_WIDTH) / 2;
-	y = display_bounds.y + (display_bounds.h - WINDOW_HEIGHT) / 2;
+	// do this in wrapper init()?
+	fcl_window_init();
+	printf("displays %d \n", fcl_window_display_count);
 
-	x_min = display_bounds.x;
-	x_max = display_bounds.x + display_bounds.w - WINDOW_WIDTH - 1;
+	fcl_window_create("sine420panning", x, y, WINDOW_WIDTH, WINDOW_HEIGHT);
+	fcl_window_center();
+	x_pos = fcl_window_pos_x;
+	y_pos = fcl_window_pos_y;
+	x_min = fcl_window_pos_x_min;
+	x_max = fcl_window_pos_x_max;
 	x_dir = 2;
-	x_pos = x;
-	y_pos = y;
 
 	printf("min x %d\n", x_min);
 	printf("max x %d\n", x_max);
 
-	window = SDL_CreateWindow("sine420panning", x, y, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
-	renderer = SDL_CreateRenderer(window, 0, 0);
+	renderer = SDL_CreateRenderer(fcl_window_object, 0, 0);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
 	fcl_audio_init();
@@ -68,7 +60,7 @@ int main(int argc, char *argv[]) {
 	int running = 1;
 	while (running) {
 
-		SDL_SetWindowPosition(window, x_pos, y_pos);
+		fcl_window_set_position(x_pos, y_pos);
 		SDL_SetRenderDrawColor(renderer, 8, 8, 8, 24);
 		SDL_RenderFillRect(renderer, &window_rect);
 
