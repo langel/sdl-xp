@@ -17,9 +17,6 @@ int main(int argc, char *argv[]) {
 	SDL_Init(SDL_INIT_EVERYTHING);
 
 	SDL_Event event;
-	SDL_Renderer *renderer;
-	SDL_Window *window;
-	SDL_Texture *texture;
 
 	SDL_Rect window_rect;
 	window_rect.x = window_rect.y = 0;
@@ -44,8 +41,7 @@ int main(int argc, char *argv[]) {
 	printf("min x %d\n", x_min);
 	printf("max x %d\n", x_max);
 
-	renderer = SDL_CreateRenderer(fcl_window_object, 0, 0);
-	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+	fcl_video_init();
 
 	fcl_audio_init();
 	fcl_audio_set_sine_freq(sine_freq);
@@ -61,11 +57,10 @@ int main(int argc, char *argv[]) {
 	while (running) {
 
 		fcl_window_set_position(x_pos, y_pos);
-		SDL_SetRenderDrawColor(renderer, 8, 8, 8, 24);
-		SDL_RenderFillRect(renderer, &window_rect);
+		fcl_video_clear(0);
 
 		// draw sine
-		SDL_SetRenderDrawColor(renderer, 8, 111, 8, 200);
+		fcl_video_set_draw_color(255);
 		for (j = 0; j < CANVAS_WIDTH; j++) {
 			x = j + x_pos;
 			y = (int)(CANVAS_HEIGHT >> 1) + (int)(sin(x / samples_per_sine) * (CANVAS_HEIGHT >> 2));
@@ -91,9 +86,6 @@ int main(int argc, char *argv[]) {
 
 		// pan audio
 		fcl_audio_set_sine_pan((float)(x_pos - x_min) / (float)(x_max - x_min));
-
-		// blit that shit
-		SDL_RenderPresent(renderer);
 
 		x_pos += x_dir;
 		if (x_pos >= x_max) x_dir = -x_dir;
@@ -123,7 +115,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		fcl_time_wait_next_frame();
+		fcl_video_frame_next();
 
 	}
 
