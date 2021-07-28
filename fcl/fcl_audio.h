@@ -16,8 +16,8 @@ void fcl_audio_process(void* userdata, uint8_t* byte_stream, int byte_stream_len
 	uint32_t i;
 	uint32_t float_stream_length = byte_stream_length >> 2;
 	for (i = 0; i < float_stream_length; i+=2) {
-		float_stream[i+1] = sin(duty_pos * TAO) * 0.5 * vol_left;
-		float_stream[i] = sin(duty_pos * TAO) * 0.5 * vol_right;
+		float_stream[i+1] = sin(duty_pos * TAO) * 0.1 * vol_left;
+		float_stream[i] = sin(duty_pos * TAO) * 0.1 * vol_right;
 		duty_pos += duty_rate;
 		if (duty_pos > 1) duty_pos--;
 	}

@@ -4,7 +4,7 @@
 #include "lib/rng-lfsr.h"
 #include "fcl/fcl.h"
 
-int FPS = 48;
+int FPS = 60;
 
 int CANVAS_WIDTH = 420;
 int CANVAS_HEIGHT = 200;
