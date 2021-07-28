@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 	fcl_window_init();
 	printf("displays %d \n", fcl_window_display_count);
 
-	fcl_window_create("sine420panning", x, y, WINDOW_WIDTH, WINDOW_HEIGHT);
+	fcl_window_create("sine420panning", WINDOW_WIDTH, WINDOW_HEIGHT);
 	fcl_window_center();
 	x_pos = fcl_window_pos_x;
 	y_pos = fcl_window_pos_y;
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 	printf("min x %d\n", x_min);
 	printf("max x %d\n", x_max);
 
-	fcl_video_init();
+	fcl_video_init(CANVAS_WIDTH, CANVAS_HEIGHT);
 
 	fcl_audio_init();
 	fcl_audio_set_sine_freq(sine_freq);
