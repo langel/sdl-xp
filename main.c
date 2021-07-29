@@ -8,8 +8,8 @@ int FPS = 60;
 
 int CANVAS_WIDTH = 420;
 int CANVAS_HEIGHT = 200;
-int WINDOW_WIDTH = 860;
-int WINDOW_HEIGHT = 540;
+int WINDOW_WIDTH = 1024;
+int WINDOW_HEIGHT = 576;
 
 
 int main(int argc, char *argv[]) {
