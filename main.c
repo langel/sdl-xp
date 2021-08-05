@@ -1,8 +1,8 @@
 #include <math.h>
 #include <stdio.h>
 #include "SDL2/SDL.h"
-#include "lib/rng-lfsr.h"
-#include "fcl/fcl.h"
+//#include "lib/rng-lfsr.h"
+#include "fcl/fcl_time.h"
 
 int FPS = 60;
 
@@ -39,8 +39,8 @@ int main(int argc, char *argv[]) {
 
     SDL_Texture * screen_texture = SDL_CreateTexture(renderer,
         SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING,
-        WINDOW_WIDTH,
-		  WINDOW_HEIGHT);
+        CANVAS_WIDTH,
+		  CANVAS_HEIGHT);
 
 	unsigned int * pixels = malloc(CANVAS_WIDTH * CANVAS_HEIGHT * 4);
 
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
 			for (int x = 0; x < CANVAS_WIDTH; ++x)
 			{
 				int color = 0;
-				color += (int) (((float)y / (float) CANVAS_HEIGHT) * 255.f) << 24; // red
+				color += (int) (((float) y / (float) CANVAS_HEIGHT) * 255.f) << 24; // red
 				color += (rand() % 255) << 16; // green
 				color += (int) (((float) x / (float) CANVAS_WIDTH) * 255.f) << 8; // blue
 				color += 255; // alpha
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
 
 	}
 
-	fcl_audio_shutdown();
+//	fcl_audio_shutdown();
 	SDL_Quit();
 
 	return 0;
