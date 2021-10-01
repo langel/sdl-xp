@@ -46,3 +46,22 @@ int rng32(int max) {
 	should look more into Xorshift:
 	https://en.wikipedia.org/wiki/Xorshift
 */
+
+
+int rng32alt() {
+	// stolen from: https://www.excamera.com/sphinx/article-xorshift.html
+	/* if this proves to be superior we should add a custom seed option */
+	static uint32_t seed = 7;
+	seed ^= seed << 13;
+	seed ^= seed >> 17;
+	seed ^= seed << 5;
+	return seed;
+}
+
+/*
+	Noise Functions aka Hashes
+	ideas from gdc video: https://www.youtube.com/watch?v=LWFzPP8ZbdU
+	instead of sequencing pseudo random numbers apply hashes to linear ints
+	python version of his hash (shouldn't be hard to make into c): https://github.com/sublee/squirrel3-python/blob/master/squirrel3.py
+	he also recomended using std::hash
+*/
