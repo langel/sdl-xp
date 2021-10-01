@@ -18,29 +18,29 @@ int main(int argc, char *argv[]) {
 
 	SDL_Event event;
 
-	 SDL_Init(SDL_INIT_VIDEO);
+	SDL_Init(SDL_INIT_VIDEO);
 
-    SDL_Window * window = SDL_CreateWindow("",
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-		  WINDOW_WIDTH, 
-		  WINDOW_HEIGHT,
-        SDL_WINDOW_RESIZABLE);
+	SDL_Window * window = SDL_CreateWindow("",
+		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+		WINDOW_WIDTH, 
+		WINDOW_HEIGHT,
+		SDL_WINDOW_RESIZABLE);
 
-    SDL_Renderer * renderer = SDL_CreateRenderer(window,
-        -1, SDL_RENDERER_PRESENTVSYNC);
+	SDL_Renderer * renderer = SDL_CreateRenderer(window,
+		-1, SDL_RENDERER_PRESENTVSYNC);
 
-    // Since we are going to display a low resolution buffer,
-    // it is best to limit the window size so that it cannot
-    // be smaller than our internal buffer size.
-    SDL_SetWindowMinimumSize(window, CANVAS_WIDTH, CANVAS_HEIGHT);
+	// Since we are going to display a low resolution buffer,
+	// it is best to limit the window size so that it cannot
+	// be smaller than our internal buffer size.
+	SDL_SetWindowMinimumSize(window, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-//    SDL_RenderSetLogicalSize(renderer, width, height);
-    SDL_RenderSetIntegerScale(renderer, 1);
+	//    SDL_RenderSetLogicalSize(renderer, width, height);
+	SDL_RenderSetIntegerScale(renderer, 1);
 
-    SDL_Texture * screen_texture = SDL_CreateTexture(renderer,
-        SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING,
-        CANVAS_WIDTH,
-		  CANVAS_HEIGHT);
+	SDL_Texture * screen_texture = SDL_CreateTexture(renderer,
+		SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING,
+		CANVAS_WIDTH,
+		CANVAS_HEIGHT);
 
 	unsigned int * pixels = malloc(CANVAS_WIDTH * CANVAS_HEIGHT * 4);
 
