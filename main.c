@@ -48,10 +48,8 @@ int main(int argc, char *argv[]) {
 	while (running) {
 
 	  // Set every pixel to white.
-	  for (int y = 0; y < CANVAS_HEIGHT; ++y)
-	  {
-			for (int x = 0; x < CANVAS_WIDTH; ++x)
-			{
+		for (int y = 0; y < CANVAS_HEIGHT; ++y) {
+			for (int x = 0; x < CANVAS_WIDTH; ++x) {
 				int color = 0;
 				color += (int) (((float) y / (float) CANVAS_HEIGHT) * 255.f) << 24; // red
 				color += (rand() % 255) << 16; // green
@@ -60,15 +58,15 @@ int main(int argc, char *argv[]) {
 				//pixels[x + y * width] = 0xffffffff;
 				pixels[x + y * CANVAS_WIDTH] = color;
 			}
-	  }
+		}
 
-	  // It's a good idea to clear the screen every frame,
-	  // as artifacts may occur if the window overlaps with
-	  // other windows or transparent overlays.
-	  SDL_RenderClear(renderer);
-	  SDL_UpdateTexture(screen_texture, NULL, pixels, CANVAS_WIDTH * 4);
-	  SDL_RenderCopy(renderer, screen_texture, NULL, NULL);
-	  SDL_RenderPresent(renderer);
+		// It's a good idea to clear the screen every frame,
+		// as artifacts may occur if the window overlaps with
+		// other windows or transparent overlays.
+		SDL_RenderClear(renderer);
+		SDL_UpdateTexture(screen_texture, NULL, pixels, CANVAS_WIDTH * 4);
+		SDL_RenderCopy(renderer, screen_texture, NULL, NULL);
+		SDL_RenderPresent(renderer);
 
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
