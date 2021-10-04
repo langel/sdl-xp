@@ -69,7 +69,6 @@ int main(int argc, char *argv[]) {
 			// make sure the window can fit the canvas
 			SDL_SetWindowMinimumSize(window, CANVAS_WIDTH, CANVAS_HEIGHT);
 			// make new canvas texture
-			SDL_DestroyTexture(canvas_texture);
 			canvas_texture = SDL_CreateTexture(renderer,
 				SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING,
 				CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -79,12 +78,10 @@ int main(int argc, char *argv[]) {
 
 		// update rectangle data
 		rect_pos_x += 0.007f;
-		// -1 on end of range because of round function
-		rect_x = lroundf(((sin(rect_pos_x) + 1.f) * 0.5f) * (float) (CANVAS_WIDTH - rect_w - 1));
+		rect_x = ((sin(rect_pos_x) + 1.f) * 0.5f) * (float) (CANVAS_WIDTH - rect_w);
 		rect_xx = rect_x + rect_w;
 		rect_pos_y += 0.014f;
-		// -1 on end of range because of round function
-		rect_y = lroundf(((sin(rect_pos_y) + 1.f) * 0.5f) * (float) (CANVAS_HEIGHT - rect_h - 1));
+		rect_y = ((sin(rect_pos_y) + 1.f) * 0.5f) * (float) (CANVAS_HEIGHT - rect_h);
 		rect_yy = rect_y + rect_h;
 
 		for (int y = 0; y < CANVAS_HEIGHT; ++y) {
@@ -93,17 +90,12 @@ int main(int argc, char *argv[]) {
 				if (collide(x, y, rect_x, rect_y, rect_xx, rect_yy) == 1) {
 					color += (int) ((1 - (float) y / (float) CANVAS_HEIGHT) * 255.f) << 24; // red
 					color += (int) ((1 - (float) x / (float) CANVAS_WIDTH) * 255.f) << 8; // blue
-//					color += (rand() % 127) << 16; // green
+					color += (rand() % 127) << 16; // green
 				}
 				else {
-					//color += (int) (((float) y / (float) CANVAS_HEIGHT) * 255.f) << 24; // red
-					//color += (int) (((float) x / (float) CANVAS_WIDTH) * 255.f) << 8; // blue
 					color += (int) (((float) y / (float) CANVAS_HEIGHT) * 255.f) << 24; // red
 					color += (int) (((float) x / (float) CANVAS_WIDTH) * 255.f) << 8; // blue
-					if ((x % 2 == 0 && y % 2 == 1) || (x % 2 == 1 && y % 2 == 0)) {
-						color += 255 << 16; // green
-					}
-					//color += (rand() % 255) << 16; // green
+					color += (rand() % 255) << 16; // green
 				}
 				color += 255; // alpha
 				//pixels[x + y * width] = 0xffffffff;
