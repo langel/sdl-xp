@@ -1,11 +1,26 @@
 oh yeah mucking about SDL2 for fun and profit
 
+windows:
 finally got this compiling on windows w/o an ide
 i highly suggest mingw and not compiling sdl for cygwin
 dev-c++ looks like it'd work too ( https://www.bloodshed.net/ )
 
+osx:
+have a compile script but requires some stuff in path i think? xD
 
--- will i have to fix mac compiling now?!?!
+linux:
+need to setup a machine or vm
+
+
+to-do:
+- overscaling pixels
+- alpha channel layering
+
+
+fcl/ - fantasy console lib
+more or less just expirementing for now
+but also a long term attempt to create an SDL wrapper
+audio will probably be a greater focus for now
 
 
 notes for non square pixel rendering ideas:
@@ -46,7 +61,3 @@ Quad the Size (4x) : 1680x800
 
 hardware limitations: resizing the pixel density costs one visible frame of the old pixel density in the new pixel density; if new one is bigger missing data is filled with noise
 
-cool demo alert:
-circle half height of screen moving left/right & up/down on sine waves
-random pixel density updated once a second?
-needs a tiled or checkered background
