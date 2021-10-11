@@ -56,11 +56,11 @@ void load_char_buffer() {
 		int i = 0;
 		while ((dent = readdir(dir)) != NULL) {
 			if (strstr(dent->d_name, ".bin")) {
-				char path[] = "char_roms/";
+				char path[128] = "char_roms/";
 				printf("%s \n", dent->d_name);
 				printf("%d \n", i);
 				strcat(path, dent->d_name);
-				printf("%s \n", path);
+				printf("%s wow concatentation\n", path);
 				printf("%d \n", i);
 				FILE *file = fopen(path, "rb");
 				fseek(file, 0, SEEK_END);
