@@ -14,7 +14,11 @@ need to setup a machine or vm
 
 to-do:
 - overscaling pixels
-- alpha channel layering
+- custom mouse cursor
+- ttf + clipboard
+- load images to texture
+- particle system
+- window events https://wiki.libsdl.org/SDL_WindowEvent
 
 
 fcl/ - fantasy console lib
