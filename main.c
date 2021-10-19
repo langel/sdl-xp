@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
 	SDL_Event event;
 
 	SDL_Init(SDL_INIT_VIDEO);
-	IMG_Init(IMG_INIT_PNG);
+	IMG_Init(IMG_INIT_JPG);
 	TTF_Init();
 
 	texture_w = 8 * char_w;
@@ -92,10 +92,16 @@ int main(int argc, char *argv[]) {
 	SDL_Rect font_rect = { 0, 0, font_w, font_h };
 
 	// IMAGE STUFF
-	SDL_Surface * image_surface = IMG_Load("images/derp.jpg");
-	if (image_surface == NULL) printf("derp didn't load\n");
+	SDL_Surface * image_surface = IMG_Load("assets/derp.gif");
+	if (image_surface == NULL) {
+		printf("derp didn't load\n");
+		printf("IMG_Load: %s\n", IMG_GetError());
+	}
 	SDL_Texture * image_texture = SDL_CreateTextureFromSurface(renderer, image_surface);
 	SDL_FreeSurface(image_surface);
+	int image_w, image_h;
+	SDL_QueryTexture(image_texture, NULL, NULL, &image_w, &image_h);
+	SDL_Rect image_rect = { 0, 0, image_w, image_h };
 			
 	printf("texture resolution: %d x %d\n", texture_w, texture_h);
 	printf("window resolution: %d x %d\n", window_w, window_h);
@@ -139,6 +145,7 @@ int main(int argc, char *argv[]) {
 				texture_w, texture_h);
 	SDL_UpdateTexture(petscii_pet_texture, NULL, pixels_pet, texture_w * 4);
 	free(pixels_pet);
+	SDL_SetTextureBlendMode(petscii_pet_texture, SDL_BLENDMODE_ADD);
 	SDL_Rect petscii_pet_rect;
 	petscii_pet_rect.w = texture_w * texture_mul;
 	petscii_pet_rect.h = texture_h * texture_mul;
@@ -179,7 +186,7 @@ int main(int argc, char *argv[]) {
 		petscii_c64_rect.y = (int) (sin_pos2perc(y_sin_c64) * (float) texture_max_y);
 
 		SDL_RenderClear(renderer);
-		SDL_RenderCopy(renderer, image_texture, NULL, NULL);
+		SDL_RenderCopy(renderer, image_texture, NULL, &image_rect);
 		SDL_RenderCopy(renderer, petscii_pet_texture, NULL, &petscii_pet_rect);
 		SDL_RenderCopy(renderer, petscii_c64_texture, NULL, &petscii_c64_rect);
 		SDL_RenderCopy(renderer, font_texture, NULL, &font_rect);
