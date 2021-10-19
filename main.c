@@ -2,8 +2,12 @@
 #include <dirent.h>
 #include <math.h>
 #include <string.h>
-#include "SDL2/SDL.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
 
+
+#define APP_TITLE "TTF test"
 
 #define window_mul 5;
 #define texture_mul 3;
@@ -52,6 +56,8 @@ int main(int argc, char *argv[]) {
 	SDL_Event event;
 
 	SDL_Init(SDL_INIT_VIDEO);
+	IMG_Init(IMG_INIT_PNG);
+	TTF_Init();
 
 	texture_w = 8 * char_w;
 	texture_h = 8 * char_h;
@@ -69,11 +75,27 @@ int main(int argc, char *argv[]) {
 	int x = display_bounds.x + (display_bounds.w - window_w) / 2;
 	int y = display_bounds.y + (display_bounds.h - window_h) / 2;
 	
-	SDL_Window * window = SDL_CreateWindow("sdl-xp", x, y,
+	SDL_Window * window = SDL_CreateWindow(APP_TITLE, x, y,
 		window_w, window_h,
 		SDL_WINDOW_RESIZABLE);
 	SDL_Renderer * renderer = SDL_CreateRenderer(window,
 		-1, SDL_RENDERER_PRESENTVSYNC);
+
+	// FONT STUFF
+	TTF_Font * font = TTF_OpenFont("fonts/OpenSans-BoldItalic.ttf", 222);
+	SDL_Color color = { 255, 255, 255, 222 };
+	SDL_Surface * font_surface = TTF_RenderUTF8_Blended(font, APP_TITLE, color);
+	SDL_Texture * font_texture = SDL_CreateTextureFromSurface(renderer, font_surface);
+	SDL_FreeSurface(font_surface);
+	int font_w, font_h;
+	SDL_QueryTexture(font_texture, NULL, NULL, &font_w, &font_h);
+	SDL_Rect font_rect = { 0, 0, font_w, font_h };
+
+	// IMAGE STUFF
+	SDL_Surface * image_surface = IMG_Load("images/derp.jpg");
+	if (image_surface == NULL) printf("derp didn't load\n");
+	SDL_Texture * image_texture = SDL_CreateTextureFromSurface(renderer, image_surface);
+	SDL_FreeSurface(image_surface);
 			
 	printf("texture resolution: %d x %d\n", texture_w, texture_h);
 	printf("window resolution: %d x %d\n", window_w, window_h);
@@ -132,7 +154,15 @@ int main(int argc, char *argv[]) {
 	petscii_c64_rect.h = texture_h * texture_mul;
 
 	int texture_max_x , texture_max_y;
-	float x_sin_pet, y_sin_pet, x_sin_c64, y_sin_c64;
+	float x_sin_pet = 0.f;
+	float y_sin_pet = 0.f;
+	float x_sin_c64 = 0.f; 
+	float y_sin_c64 = 0.f;
+		
+	texture_max_x = window_w - petscii_pet_rect.w;
+	texture_max_y = window_h - petscii_c64_rect.h;
+	printf("max_x : %d\n", texture_max_x);
+	printf("max_y : %d\n", texture_max_y);
 
 	while (running) {
 	
@@ -149,8 +179,10 @@ int main(int argc, char *argv[]) {
 		petscii_c64_rect.y = (int) (sin_pos2perc(y_sin_c64) * (float) texture_max_y);
 
 		SDL_RenderClear(renderer);
+		SDL_RenderCopy(renderer, image_texture, NULL, NULL);
 		SDL_RenderCopy(renderer, petscii_pet_texture, NULL, &petscii_pet_rect);
 		SDL_RenderCopy(renderer, petscii_c64_texture, NULL, &petscii_c64_rect);
+		SDL_RenderCopy(renderer, font_texture, NULL, &font_rect);
 		SDL_RenderPresent(renderer);
 
 		while (SDL_PollEvent(&event)) {
@@ -178,6 +210,10 @@ int main(int argc, char *argv[]) {
 //		running = 0;
 	}
 
+	SDL_DestroyRenderer(renderer);
+	SDL_DestroyWindow(window);
+	TTF_Quit();
+	IMG_Quit();
 	SDL_Quit();
 	return 0;
 }
