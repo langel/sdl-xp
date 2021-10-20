@@ -7,7 +7,7 @@
 #include <SDL2/SDL_ttf.h>
 
 
-#define APP_TITLE "TTF test"
+#define APP_TITLE "derpTASTIC"
 
 #define window_mul 5;
 #define texture_mul 3;
@@ -49,6 +49,16 @@ float sin_pos2perc(float sin_pos) {
 }
 
 
+void next_bg_color(unsigned char color[4]) {
+	static float count = 0.f;
+	count += 0.01f;
+	color[0] = (int) ((float) 128 * sin_pos2perc(count));
+	color[1] = (int) ((float) 128 * sin_pos2perc(count + 2));
+	color[2] = (int) ((float) 128 * sin_pos2perc(count + 4));
+	color[3] = 255;
+}
+
+
 int main(int argc, char *argv[]) {
 	load_char_buffer("petscii_8032.bin", 0);
 	load_char_buffer("petscii_c64.bin", 1);
@@ -83,9 +93,11 @@ int main(int argc, char *argv[]) {
 
 	// FONT STUFF
 	TTF_Font * font = TTF_OpenFont("fonts/OpenSans-BoldItalic.ttf", 222);
-	SDL_Color color = { 255, 255, 255, 222 };
-	SDL_Surface * font_surface = TTF_RenderUTF8_Blended(font, APP_TITLE, color);
+	SDL_Color text_fg = { 128, 64, 16, 255 };
+	SDL_Color text_bg = { 255, 255, 255, 255};
+	SDL_Surface * font_surface = TTF_RenderUTF8_Shaded(font, APP_TITLE, text_fg, text_bg);
 	SDL_Texture * font_texture = SDL_CreateTextureFromSurface(renderer, font_surface);
+	SDL_SetTextureBlendMode(font_texture, SDL_BLENDMODE_MOD);
 	SDL_FreeSurface(font_surface);
 	int font_w, font_h;
 	SDL_QueryTexture(font_texture, NULL, NULL, &font_w, &font_h);
@@ -99,7 +111,7 @@ int main(int argc, char *argv[]) {
 	}
 	SDL_Texture * image_texture = SDL_CreateTextureFromSurface(renderer, image_surface);
 	SDL_FreeSurface(image_surface);
-	int image_w, image_h;
+	int image_w, image_h, image_max_x, image_max_y, image_dir_x, image_dir_y;
 	SDL_QueryTexture(image_texture, NULL, NULL, &image_w, &image_h);
 	SDL_Rect image_rect = { 0, 0, image_w, image_h };
 			
@@ -171,11 +183,48 @@ int main(int argc, char *argv[]) {
 	printf("max_x : %d\n", texture_max_x);
 	printf("max_y : %d\n", texture_max_y);
 
+	int derp_speed = 10;
+
+	int mouse_x, mouse_y;
+	uint32_t mouse_buttons;
+	SDL_ShowCursor(SDL_DISABLE);
+
+	unsigned char bg_color[4];
+
+	int frame_counter = 0;
+	int frame_0s = 0;
+	SDL_Rect frame_chr = { 0, 8, 8, 8 };
+	SDL_Rect frame_dest = { 0, 0, 48, 48 };
+
 	while (running) {
+
+		// FRAME COUNTER
+		frame_counter++;
+		frame_0s = ((frame_counter / 10)  % 10) + 16;
+		frame_chr.x = frame_0s * 8;
+
+		// MOUSE SHIT
+		mouse_buttons = SDL_GetMouseState(&mouse_x, &mouse_y);
+//		printf("window: %d x %d        mouse: %d x %d\n", window_w, window_h, mouse_x, mouse_y);
 	
+		// DERP IMAGE
+		derp_speed = (window_w + window_h) * 0.0025;
+		image_max_x = window_w - image_rect.w;
+		if ((image_dir_x && image_rect.x >= image_max_x) || (!image_dir_x && image_rect.x <= 0)) {
+			image_dir_x = !image_dir_x;
+		}
+		if (image_dir_x) image_rect.x += derp_speed;
+		else image_rect.x -= derp_speed;
+		image_max_y = window_h - image_rect.h;
+		if ((image_dir_y && image_rect.y >= image_max_y) || (!image_dir_y && image_rect.y <= 0)) {
+			image_dir_y = !image_dir_y;
+		}
+		if (image_dir_y) image_rect.y += derp_speed;
+		else image_rect.y -= derp_speed;
+
+		// PETSCII TILE SETS
 		texture_max_x = window_w - petscii_pet_rect.w;
 		texture_max_y = window_h - petscii_c64_rect.h;
-
 		x_sin_pet += 0.05f;
 		petscii_pet_rect.x = (int) (sin_pos2perc(x_sin_pet) * (float) texture_max_x);
 		y_sin_pet += 0.032f;
@@ -185,11 +234,23 @@ int main(int argc, char *argv[]) {
 		y_sin_c64 += 0.027f;
 		petscii_c64_rect.y = (int) (sin_pos2perc(y_sin_c64) * (float) texture_max_y);
 
+		// RENDER THE TEXTURE LAYERS
+		next_bg_color(bg_color);
+		SDL_SetRenderDrawColor(renderer, bg_color[0], bg_color[1], bg_color[2], bg_color[3]);
 		SDL_RenderClear(renderer);
 		SDL_RenderCopy(renderer, image_texture, NULL, &image_rect);
 		SDL_RenderCopy(renderer, petscii_pet_texture, NULL, &petscii_pet_rect);
 		SDL_RenderCopy(renderer, petscii_c64_texture, NULL, &petscii_c64_rect);
 		SDL_RenderCopy(renderer, font_texture, NULL, &font_rect);
+		SDL_RenderCopy(renderer, petscii_pet_texture, &frame_chr, &frame_dest);
+		if (mouse_x > 0 && mouse_x < window_w - 1 && mouse_y > 0 && mouse_y < window_h - 1) {
+			SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+			for (int x = -8; x < 8; x++) {
+				for (int y = -8; y < 8; y++) {
+					SDL_RenderDrawPoint(renderer, mouse_x + x, mouse_y + y);
+				}
+			}
+		}
 		SDL_RenderPresent(renderer);
 
 		while (SDL_PollEvent(&event)) {
