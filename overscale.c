@@ -3,8 +3,8 @@
 
 int texture_w = 420;
 int texture_h = 200;
-int window_w = 840;
-int window_h = 473;
+int window_w = 1280;
+int window_h = 720;
 
 SDL_Color palette[8] = {
 	{ 0xf0, 0xf0, 0xdc, 0xff }, // white
@@ -28,7 +28,8 @@ int main(int argc, char* args[]) {
 	SDL_Renderer * renderer = SDL_CreateRenderer(window,
 		-1, SDL_RENDERER_PRESENTVSYNC);
 
-	unsigned int * pixels = malloc(texture_w * texture_h * 4);
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
+	uint32_t * pixels = malloc(texture_w * texture_h * 4);
 	SDL_Texture * pixel_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, texture_w, texture_h);
 	for (int x = 0; x < texture_w; x++) {
 		for (int y = 0; y < texture_h; y++) {
@@ -43,27 +44,19 @@ int main(int argc, char* args[]) {
 	}
 	SDL_UpdateTexture(pixel_texture, NULL, pixels, texture_w * 4);
 
-	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 	SDL_Texture * overscale_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, texture_w * 3, texture_h * 3);
 	SDL_SetRenderTarget(renderer, overscale_texture);
 	SDL_RenderCopy(renderer, pixel_texture, NULL, NULL);
 
 	SDL_SetRenderTarget(renderer, NULL);
 
-	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
-	SDL_Texture * downscale_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, texture_w * 3, texture_h * 3);
-	SDL_SetRenderTarget(renderer, downscale_texture);
-	SDL_RenderCopy(renderer, overscale_texture, NULL, NULL);
-
-	SDL_SetRenderTarget(renderer, NULL);
-	
 	int running = 1;
 
 	while (running) {
 
 		SDL_RenderClear(renderer);
-		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
-		SDL_RenderCopy(renderer, downscale_texture, NULL, NULL);
+		SDL_RenderCopy(renderer, overscale_texture, NULL, NULL);
 		SDL_RenderPresent(renderer);
 
 		while (SDL_PollEvent(&event)) {
