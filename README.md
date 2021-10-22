@@ -13,10 +13,8 @@ need to setup a machine or vm
 
 
 to-do:
-- overscaling pixels
-- custom mouse cursor
 - ttf + clipboard
-- load images to texture
+- load png to texture
 - particle system
 - window events https://wiki.libsdl.org/SDL_WindowEvent
 
