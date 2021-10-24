@@ -1,21 +1,36 @@
 
+struct char_rom {
+	int char_count;
+	unsigned char char_w;
+	unsigned char char_h;
+	SDL_Texture * texture;
+	int texture_w;
+	int texture_h;
+};
 
 // only works with one byte per row
-SDL_Texture * char_rom_create_texture(SDL_Renderer * renderer, char * path, char char_height) {
+
+struct char_rom char_rom_create_texture_variable_height(SDL_Renderer * renderer, char * path, char char_height) {
+	struct char_rom font;
+	font.char_w = 8;
+	font.char_h = char_height;
 	// load char rom data and realize texture size
 	printf("loading %s into font texture\n", path);
 	// XXX error handling would be nice? :P
 	FILE * file = fopen(path, "rb");
 	fseek(file, 0, SEEK_END);
 	int file_length = ftell(file);
-	printf("%d bytes - space for %d characters\n", file_length, file_length / 8);
 	fseek(file, 0, SEEK_SET);
 	char * buffer = malloc(file_length);
 	fread(buffer, file_length, 1, file);
 	// create texture of correct dimensions
-	int char_count = file_length / char_height;
-	SDL_Texture * texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, char_count * 8, char_height);
+	font.char_count = file_length / char_height;
+	printf("%d bytes - space for %d characters\n", file_length, font.char_count);
+	SDL_Texture * texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, font.char_count * 8, font.char_h);
+	SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
 	SDL_SetRenderTarget(renderer, texture);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+	SDL_RenderClear(renderer);
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	// populate texture with char rom data
 	for (int i = 0; i < file_length; i++) {
@@ -29,5 +44,15 @@ SDL_Texture * char_rom_create_texture(SDL_Renderer * renderer, char * path, char
 	}
 	free(buffer);
 	SDL_SetRenderTarget(renderer, NULL);
-	return texture;
+	font.texture = texture;
+	return font;
+}
+
+struct char_rom char_rom_create_texture(SDL_Renderer * renderer, char * path) {
+	return char_rom_create_texture_variable_height(renderer, path, 8);
+}
+
+SDL_Rect char_rom_get_rect(struct char_rom font, int char_index) {
+	SDL_Rect temp = { char_index * font.char_w, 0, font.char_w, font.char_h };
+	return temp;
 }
