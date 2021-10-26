@@ -1,6 +1,6 @@
 build:
 	gcc -Wall \
-	-std=c99 \
+	-std=c11 \
 	./main.c \
 	-I"C:\libsdl\include" \
 	-L"C:\libsdl\lib" \
