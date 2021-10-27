@@ -55,7 +55,7 @@ int main(int argc, char * argv[]) {
 	SDL_Renderer * renderer = SDL_CreateRenderer(window,
 		-1, SDL_RENDERER_PRESENTVSYNC);
 
-	struct char_rom font = char_rom_create_texture(renderer, "char_roms/eagle_pc_cga.bin");
+	char_rom font = char_rom_create_texture(renderer, "char_roms/eagle_pc_cga.bin");
 	SDL_Rect font_get = { 0, 0, window_w, 8 };
 	SDL_Rect temp_set = { 100, 100, 16, 16 };
 

@@ -1,17 +1,18 @@
+#include <string.h>
 
-struct char_rom {
+typedef struct char_rom {
 	int char_count;
 	unsigned char char_w;
 	unsigned char char_h;
 	SDL_Texture * texture;
 	int texture_w;
 	int texture_h;
-};
+} char_rom;
 
 // only works with one byte per row
 
 struct char_rom char_rom_create_texture_variable_height(SDL_Renderer * renderer, char * path, char char_height) {
-	struct char_rom font;
+	char_rom font;
 	font.char_w = 8;
 	font.char_h = char_height;
 	// load char rom data and realize texture size
@@ -52,7 +53,23 @@ struct char_rom char_rom_create_texture(SDL_Renderer * renderer, char * path) {
 	return char_rom_create_texture_variable_height(renderer, path, 8);
 }
 
-SDL_Rect char_rom_get_rect(struct char_rom font, int char_index) {
+SDL_Rect char_rom_get_rect(char_rom font, int char_index) {
 	SDL_Rect temp = { char_index * font.char_w, 0, font.char_w, font.char_h };
 	return temp;
+}
+
+SDL_Texture * char_rom_get_texture_from_string(SDL_Renderer * renderer, char_rom font, char * string) {
+	int string_length = strlen(string);
+	SDL_Texture * texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, string_length * font.char_w, font.char_h);
+	SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+	SDL_SetRenderTarget(renderer, texture);
+	SDL_Rect src;
+	SDL_Rect dest = { 0, 0, font.char_w, font.char_h };
+	for (int i = 0; i < string_length; i++) {
+		src = char_rom_get_rect(font, string[i]);
+		SDL_RenderCopy(renderer, font.texture, &src, &dest);
+		dest.x += font.char_w;
+	}
+	SDL_SetRenderTarget(renderer, NULL);
+	return texture;
 }
