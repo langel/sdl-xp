@@ -220,7 +220,7 @@ int main(int argc, char *argv[]) {
 	int frame_0s = 0;
 	SDL_Rect frame_chr = { 0, 8, 8, 8 };
 	SDL_Rect frame_dest = { 0, 8, frame_digit_size, frame_digit_size };
-	char frame_count_str[16];
+	char frame_count_str[22];
 
 	while (running) {
 
@@ -270,7 +270,7 @@ int main(int argc, char *argv[]) {
 		SDL_RenderCopy(renderer, petscii_pet_texture, NULL, &petscii_pet_rect);
 		SDL_RenderCopy(renderer, petscii_c64_texture, NULL, &petscii_c64_rect);
 		SDL_RenderCopy(renderer, font_texture, NULL, &font_rect);
-		sprintf(frame_count_str, "% 16u", frame_counter);
+		sprintf(frame_count_str, "%016u", frame_counter);
 		for (int exp = 15; exp >= 0; exp--) {
 			frame_dest.x = (15 - exp) * frame_digit_size;
 			// binary top row
