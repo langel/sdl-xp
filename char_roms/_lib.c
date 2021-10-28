@@ -43,6 +43,7 @@ struct char_rom char_rom_create_texture_variable_height(SDL_Renderer * renderer,
 			}
 		}
 	}
+	// cleanup & return
 	free(buffer);
 	SDL_SetRenderTarget(renderer, NULL);
 	font.texture = texture;
@@ -59,10 +60,14 @@ SDL_Rect char_rom_get_rect(char_rom font, int char_index) {
 }
 
 SDL_Texture * char_rom_get_texture_from_string(SDL_Renderer * renderer, char_rom font, char * string) {
+	// stash render target
+	SDL_Texture * stashed_target = SDL_GetRenderTarget(renderer);
 	int string_length = strlen(string);
 	SDL_Texture * texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, string_length * font.char_w, font.char_h);
 	SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
 	SDL_SetRenderTarget(renderer, texture);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+	SDL_RenderClear(renderer);
 	SDL_Rect src;
 	SDL_Rect dest = { 0, 0, font.char_w, font.char_h };
 	for (int i = 0; i < string_length; i++) {
@@ -70,6 +75,6 @@ SDL_Texture * char_rom_get_texture_from_string(SDL_Renderer * renderer, char_rom
 		SDL_RenderCopy(renderer, font.texture, &src, &dest);
 		dest.x += font.char_w;
 	}
-	SDL_SetRenderTarget(renderer, NULL);
+	SDL_SetRenderTarget(renderer, stashed_target);
 	return texture;
 }

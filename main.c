@@ -4,6 +4,7 @@
 #include <SDL2/SDL_image.h>
 #include "char_roms/_lib.c"
 
+#define KNOB_COUNT 4
 #define KNOB_TURN 270
 #define OVERSCALE_MUL 4
 
@@ -45,15 +46,19 @@ knob knobs[4] = {
 	{ 10.f, 0.f, 0.f, 0.f, 0.f, { 200, 120, 72, 72 } },
 };
 
+void knob_update(knob * knob_ent) {
+	if (knob_ent->val > knob_ent->max) knob_ent->val = knob_ent->max;
+	if (knob_ent->val < knob_ent->min) knob_ent->val = knob_ent->min;
+	knob_ent->pos = (knob_ent->val - knob_ent->min) / (knob_ent->max - knob_ent->min);
+	knob_ent->rot = knob_ent->pos * KNOB_TURN - (KNOB_TURN * 0.5f);
+//	printf("%f %f %f %f\n", rel, knob_ent->val, knob_ent->pos, knob_ent->rot);
+}
+
 void knob_update_relative(knob * knob_ent, float rel) {
 	// val is between min and max
 	// rot is between -135 and 135
 	knob_ent->val += rel * ((knob_ent->max - knob_ent->min) / KNOB_TURN);
-	if (knob_ent->val > knob_ent->max) knob_ent->val = knob_ent->max;
-	if (knob_ent->val < knob_ent->min) knob_ent->val = knob_ent->min;
-	knob_ent->pos = (knob_ent->max - knob_ent->min) / (knob_ent->val - knob_ent->min);
-	knob_ent->rot = knob_ent->pos * KNOB_TURN - (KNOB_TURN * 0.5f);
-	printf("%f %f %f %f\n", rel, knob_ent->val, knob_ent->pos, knob_ent->rot);
+	knob_update(knob_ent);
 }
 
 int collision_detection(SDL_Rect a, SDL_Rect b) {
@@ -85,6 +90,7 @@ void update_scale() {
 	printf("scale_x : %f\n", scale_x);
 }
 
+
 int main(int argc, char* args[]) {
 
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -115,6 +121,7 @@ int main(int argc, char* args[]) {
 	float knob_rot = 0.f;
 	float knob_speed = 0.777f;
 	float knob_max_turn = 270.f;
+	for (int i = 0; i < KNOB_COUNT; i++) knob_update(&knobs[i]);
 
 	// mouse cursor
 	int mouse_x, mouse_y;
@@ -144,20 +151,23 @@ int main(int argc, char* args[]) {
 	int running = 1;
 	while (running) {
 
+		// update all assets aka graphics process
 		// graphics process
 		SDL_SetRenderTarget(renderer, canvas_texture);
-		set_color(renderer, 7);
+		set_color(renderer, 3);
 		SDL_RenderClear(renderer);
 		// knob draws
-		for (int i = 0; i < 4; i++) {
+		for (int i = 0; i < KNOB_COUNT; i++) {
 			// actual knob
 			SDL_RenderCopyEx(renderer, knob_texture, NULL, &knobs[i].rect, knobs[i].rot, NULL, SDL_FLIP_NONE);
 			// knob value
-			sprintf(font_string, "% 8.3f", knobs[i].val);
-//			font_texture = char_rom_get_texture_from_string(renderer, font, font_string);
-//			font_rect.x = knobs[i].rect.x + 100;
-//			font_rect.y = knobs[i].rect.y + 32;
-//			SDL_RenderCopy(renderer, font_texture, NULL, &font_rect);
+			sprintf(font_string, "% 8.1f", knobs[i].val);
+			font_texture = char_rom_get_texture_from_string(renderer, font, font_string);
+			font_rect.x = knobs[i].rect.x + 72;
+			font_rect.y = knobs[i].rect.y + 32;
+//			SDL_SetRenderTarget(renderer, canvas_texture);
+			SDL_RenderCopy(renderer, font_texture, NULL, &font_rect);
+			SDL_DestroyTexture(font_texture);
 		}
 		knob_rot += knob_speed;
 
@@ -173,7 +183,7 @@ int main(int argc, char* args[]) {
 			// if mouse = grab and mouse up : mouse = normal
 
 			mouse_hover = 0;
-			for (int i = 0; i < 4; i++) {
+			for (int i = 0; i < KNOB_COUNT; i++) {
 				if (collision_detection(knobs[i].rect, mouse_hotspot)) {
 					mouse_hover = 1;
 //					knobs[i].rot += 0.5f;
