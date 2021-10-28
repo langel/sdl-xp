@@ -1,19 +1,19 @@
 oh yeah mucking about SDL2 for fun and profit
 
 ## windows
-finally got this compiling on windows w/o an ide
-probably went with the wrong mingw : https://sourceforge.net/projects/mingw/ (does not support 64bit compiling with SDL2_image loading pngs!? :shrug:)
-this guy explains the mingw/sdl install : https://www.youtube.com/watch?v=UvJt9MZs_M8
-32 bit dlls!!!  (i686 == 32 bit duh!!!)
-`make.bat` builds and executes mian.c
+- finally got this compiling on windows w/o an ide
+- probably went with the wrong mingw : https://sourceforge.net/projects/mingw/ (does not support 64bit compiling with SDL2_image loading pngs!? :shrug:)
+- this guy explains the mingw/sdl install : https://www.youtube.com/watch?v=UvJt9MZs_M8
+- 32 bit dlls!!!  (i686 == 32 bit duh!!!)
+- `make.bat` builds and executes mian.c
 
 ## osx
-`brew install SDL2` `brew install SDL2_image` etc
-`./build_osx.sh` to build and run main.c
+- `brew install SDL2` `brew install SDL2_image` etc
+- `./build_osx.sh` to build and run main.c
 (magically comes out 64 bit wowow)
 
-linux:
-need to setup a machine or vm
+## linux
+:shrug: need to setup a machine or vm
 
 
 to-do:
