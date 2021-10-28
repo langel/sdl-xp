@@ -58,7 +58,8 @@ int main(int argc, char *argv[]) {
 	int running = 1;
 	int framecount = 11111;
 	int rect_x, rect_y, rect_w, rect_h, rect_xx, rect_yy;
-	float rect_pos_x, rect_pos_y;;
+	float rect_pos_x = 0;
+	float rect_pos_y = 0;
 
 	while (running) {
 

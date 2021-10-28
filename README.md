@@ -1,31 +1,33 @@
 oh yeah mucking about SDL2 for fun and profit
 
-windows:
+## windows
 finally got this compiling on windows w/o an ide
-i highly suggest mingw and not compiling sdl for cygwin
-dev-c++ looks like it'd work too ( https://www.bloodshed.net/ )
+probably went with the wrong mingw : https://sourceforge.net/projects/mingw/ (does not support 64bit compiling with SDL2_image loading pngs!? :shrug:)
+this guy explains the mingw/sdl install : https://www.youtube.com/watch?v=UvJt9MZs_M8
+32 bit dlls!!!  (i686 == 32 bit duh!!!)
+`make.bat` builds and executes mian.c
 
-osx:
-have a compile script but requires some stuff in path i think? xD
+## osx
+`brew install SDL2` `brew install SDL2_image` etc
+`./build_osx.sh` to build and run main.c
+(magically comes out 64 bit wowow)
 
 linux:
 need to setup a machine or vm
 
 
 to-do:
-- ttf + clipboard
-- load png to texture
+- clipboard
 - particle system
+- saving window position/size to config
 - window events https://wiki.libsdl.org/SDL_WindowEvent
 
 
 fcl/ - fantasy console lib
-more or less just expirementing for now
-but also a long term attempt to create an SDL wrapper
-audio will probably be a greater focus for now
+fac/ - fantasy audio chip? jajajaa
 
 
-notes for non square pixel rendering ideas:
+## non-square pixel thought stream
 
 4/3 or 12/9  vs 16/9
 

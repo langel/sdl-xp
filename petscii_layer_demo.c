@@ -132,7 +132,10 @@ int main(int argc, char *argv[]) {
 	petscii_c64_rect.h = texture_h * texture_mul;
 
 	int texture_max_x , texture_max_y;
-	float x_sin_pet, y_sin_pet, x_sin_c64, y_sin_c64;
+	float x_sin_pet = 0;
+	float y_sin_pet = 0;
+	float x_sin_c64 = 0;
+	float y_sin_c64 = 0;
 
 	while (running) {
 	
