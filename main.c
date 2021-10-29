@@ -6,7 +6,7 @@
 
 #define KNOB_COUNT 4
 #define KNOB_TURN 270
-#define OVERSCALE_MUL 4
+#define OVERSCALE_MUL 3
 
 int texture_w = 420;
 int texture_h = 200;
@@ -26,39 +26,66 @@ SDL_Color palette[8] = {
 	{ 0x10, 0x18, 0x20, 0xff }, // black
 };
 
+float normalize_get_skewfactor(float max, float min, float mid) {
+	return log(0.5f) / log((mid-min)/(max-min));
+}
+
+float normalize_range_value(float max, float min, float val) {
+	return (val - min) / (max - min);
+}
+
+float normalize_apply_curve(float val, float curve) {
+	return powf(val, curve);
+}
+
+float normalize_inverse_curve(float curve) {
+	return 1.f / curve;
+}
+
 typedef struct {
 	float max;
 	float min;
 	float pos;
 	float rot;
 	float val;
+	float curve;
+	char label[32];
 	SDL_Rect rect;
 } knob;
 
 knob knobs[4] = {
 	// coarse tune
-	{ 22000.f, 22.f, 0.f, 0.f, 420.f, { 30, 20, 72, 72 } },
+	{ 11500.f, 22.f, 0.f, 0.f, 420.f, 3.f, 
+		"Coarse Tune", { 30, 20, 72, 72 } },
 	// fine tune
-	{ 1.f, -1.f, 0.f, 0.f, 0.f, { 30, 120, 72, 72 } },
+	{ 1.f, -1.f, 0.f, 0.f, 0.f, 1.f, 
+		"Fine Tune  ", { 30, 120, 72, 72 } },
 	// cutoff
-	{ 22000.f, 22.f, 0.f, 0.f, 22000.f, { 200, 20, 72, 72 } },
+	{ 18000.f, 50.f, 0.f, 0.f, 18000.f, 2.5f, 
+		"Cutoff Freq", { 200, 20, 72, 72 } },
 	// res
-	{ 10.f, 0.f, 0.f, 0.f, 0.f, { 200, 120, 72, 72 } },
+	{ 10.f, 0.f, 0.f, 0.f, 0.f, 1.f, 
+		"Cutoff Res ", { 200, 120, 72, 72 } },
 };
 
-void knob_update(knob * knob_ent) {
-	if (knob_ent->val > knob_ent->max) knob_ent->val = knob_ent->max;
-	if (knob_ent->val < knob_ent->min) knob_ent->val = knob_ent->min;
-	knob_ent->pos = (knob_ent->val - knob_ent->min) / (knob_ent->max - knob_ent->min);
-	knob_ent->rot = knob_ent->pos * KNOB_TURN - (KNOB_TURN * 0.5f);
-//	printf("%f %f %f %f\n", rel, knob_ent->val, knob_ent->pos, knob_ent->rot);
+void knob_update(knob * k) {
+	k->rot = k->pos * KNOB_TURN - (KNOB_TURN * 0.5f);
+	k->val = (k->max - k->min) * normalize_apply_curve(k->pos, k->curve) + k->min;
 }
 
-void knob_update_relative(knob * knob_ent, float rel) {
-	// val is between min and max
-	// rot is between -135 and 135
-	knob_ent->val += rel * ((knob_ent->max - knob_ent->min) / KNOB_TURN);
-	knob_update(knob_ent);
+void knob_init(knob * k) {
+	// set knob position from value
+	k->pos = normalize_apply_curve( 
+		normalize_range_value(k->max, k->min, k->val),
+		normalize_inverse_curve(k->curve));
+	knob_update(k);
+}
+
+void knob_update_relative(knob * k, float rel) {
+	k->pos += rel;
+	if (k->pos > 1) k->pos = 1;	
+	if (k->pos < 0) k->pos = 0;	
+	knob_update(k);
 }
 
 int collision_detection(SDL_Rect a, SDL_Rect b) {
@@ -105,11 +132,12 @@ int main(int argc, char* args[]) {
 	// font struct
 	char_rom font = char_rom_create_texture(renderer, "char_roms/eagle_pc_cga.bin");
 	SDL_Texture * font_texture;
-	SDL_Rect font_rect = { 0, 0, 64, 8 };
+	SDL_Rect label_rect = { 0, 0, 88, 8 };
+	SDL_Rect value_rect = { 0, 0, 64, 8 };
 	char font_string[10];
 
 	// knob texture
-	const char * knob_path = "assets/knob-small.png";
+	const char * knob_path = "assets/knob.png";
 	SDL_Surface * knob_surface = IMG_Load(knob_path);
 	if (!knob_surface) {
 		printf("Failed to load image at %s: %s\n", knob_path, SDL_GetError());
@@ -118,10 +146,7 @@ int main(int argc, char* args[]) {
 	SDL_Texture * knob_texture = SDL_CreateTextureFromSurface(renderer, knob_surface);
 	SDL_SetTextureBlendMode(knob_texture, SDL_BLENDMODE_BLEND);
 	SDL_FreeSurface(knob_surface);
-	float knob_rot = 0.f;
-	float knob_speed = 0.777f;
-	float knob_max_turn = 270.f;
-	for (int i = 0; i < KNOB_COUNT; i++) knob_update(&knobs[i]);
+	for (int i = 0; i < KNOB_COUNT; i++) knob_init(&knobs[i]);
 
 	// mouse cursor
 	int mouse_x, mouse_y;
@@ -158,18 +183,22 @@ int main(int argc, char* args[]) {
 		SDL_RenderClear(renderer);
 		// knob draws
 		for (int i = 0; i < KNOB_COUNT; i++) {
-			// actual knob
-			SDL_RenderCopyEx(renderer, knob_texture, NULL, &knobs[i].rect, knobs[i].rot, NULL, SDL_FLIP_NONE);
+			// knob label
+			font_texture = char_rom_get_texture_from_string(renderer, font, knobs[i].label);
+			label_rect.x = knobs[i].rect.x + 72;
+			label_rect.y = knobs[i].rect.y;
+			SDL_RenderCopy(renderer, font_texture, NULL, &label_rect);
+			SDL_DestroyTexture(font_texture);
 			// knob value
 			sprintf(font_string, "% 8.1f", knobs[i].val);
 			font_texture = char_rom_get_texture_from_string(renderer, font, font_string);
-			font_rect.x = knobs[i].rect.x + 72;
-			font_rect.y = knobs[i].rect.y + 32;
-//			SDL_SetRenderTarget(renderer, canvas_texture);
-			SDL_RenderCopy(renderer, font_texture, NULL, &font_rect);
+			value_rect.x = knobs[i].rect.x + 72;
+			value_rect.y = knobs[i].rect.y + 32;
+			SDL_RenderCopy(renderer, font_texture, NULL, &value_rect);
 			SDL_DestroyTexture(font_texture);
+			// actual knob
+			SDL_RenderCopyEx(renderer, knob_texture, NULL, &knobs[i].rect, knobs[i].rot, NULL, SDL_FLIP_NONE);
 		}
-		knob_rot += knob_speed;
 
 		// mouse draws
 		if (mouse_x > 0 && mouse_x < window_w - 1 && mouse_y > 0 && mouse_y < window_h - 1) {
@@ -186,7 +215,6 @@ int main(int argc, char* args[]) {
 			for (int i = 0; i < KNOB_COUNT; i++) {
 				if (collision_detection(knobs[i].rect, mouse_hotspot)) {
 					mouse_hover = 1;
-//					knobs[i].rot += 0.5f;
 					if (!mouse_grab) mouse_target = i;
 				}
 			}
@@ -194,7 +222,7 @@ int main(int argc, char* args[]) {
 			if (!(mouse_buttons & 1)) mouse_grab = 0;
 			if (mouse_grab) {
 				// change value based on mouse movement
-				knob_update_relative(&knobs[mouse_target], (mouse_rel_x - mouse_rel_y) * 0.5f);
+				knob_update_relative(&knobs[mouse_target], (mouse_rel_x - mouse_rel_y) * 0.001f);
 				SDL_RenderCopy(renderer, mouse_hand_closed, NULL, &mouse_cursor_rect);
 			}
 			else if (mouse_hover) {
