@@ -3,7 +3,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "char_roms/_lib.c"
-#include "lib/mouse.c"
 
 #define KNOB_COUNT 4
 #define KNOB_TURN 270
@@ -13,8 +12,6 @@ int texture_w = 420;
 int texture_h = 200;
 int window_w = 960;
 int window_h = 540;
-int window_x = 100;
-int window_y = 200;
 float scale_x;
 float scale_y;
 
@@ -126,9 +123,8 @@ int main(int argc, char* args[]) {
 	SDL_Init(SDL_INIT_EVERYTHING);
 	IMG_Init(IMG_INIT_JPG);
 	SDL_Event event;
-	SDL_Window * window = SDL_CreateWindow("knob town", window_x, window_y,
+	SDL_Window * window = SDL_CreateWindow("knob town", 100, 200,
 		window_w, window_h, SDL_WINDOW_RESIZABLE);
-	SDL_Rect window_info = { window_x, window_y, window_w, window_h };
 	SDL_Renderer * renderer = SDL_CreateRenderer(window,
 		-1, SDL_RENDERER_PRESENTVSYNC);
 	update_scale();
@@ -153,11 +149,12 @@ int main(int argc, char* args[]) {
 	for (int i = 0; i < KNOB_COUNT; i++) knob_init(&knobs[i]);
 
 	// mouse cursor
-	mouse_info mouse = mouse_init();
+	int mouse_x, mouse_y;
+	int mouse_rel_x, mouse_rel_y;
 	int mouse_grab = 0;
 	int mouse_hover = 0;
 	int mouse_target = 0; // knob id of grabbed knob
-	char mouse_info_str[20];
+	uint32_t mouse_buttons;
 	SDL_ShowCursor(SDL_DISABLE);
 	//SDL_CaptureMouse(SDL_TRUE);
 	SDL_Rect mouse_cursor_rect = { 0, 0, 16, 16 };
@@ -203,64 +200,37 @@ int main(int argc, char* args[]) {
 			SDL_RenderCopyEx(renderer, knob_texture, NULL, &knobs[i].rect, knobs[i].rot, NULL, SDL_FLIP_NONE);
 		}
 
-		// window position
-		sprintf(mouse_info_str, "%d x %d", window_x, window_y);
-		font_texture = char_rom_get_texture_from_string(renderer, font, mouse_info_str);
-		value_rect.x = 20;
-		value_rect.y = 100;
-		SDL_RenderCopy(renderer, font_texture, NULL, &value_rect);
-		SDL_DestroyTexture(font_texture);
-		// mouse position
-		sprintf(mouse_info_str, "%d x %d", mouse.x, mouse.y);
-		font_texture = char_rom_get_texture_from_string(renderer, font, mouse_info_str);
-		value_rect.x = 120;
-		value_rect.y = 100;
-		SDL_RenderCopy(renderer, font_texture, NULL, &value_rect);
-		SDL_DestroyTexture(font_texture);
-		// mouse left button pressed
-		sprintf(mouse_info_str, "%d", mouse.button_left);
-		font_texture = char_rom_get_texture_from_string(renderer, font, mouse_info_str);
-		value_rect.x = 220;
-		value_rect.y = 100;
-		SDL_RenderCopy(renderer, font_texture, NULL, &value_rect);
-		SDL_DestroyTexture(font_texture);
-		// mouse cornputed relative motion
-		sprintf(mouse_info_str, "%d x %d", mouse.rel_x, mouse.rel_y);
-		font_texture = char_rom_get_texture_from_string(renderer, font, mouse_info_str);
-		value_rect.x = 320;
-		value_rect.y = 100;
-		SDL_RenderCopy(renderer, font_texture, NULL, &value_rect);
-		SDL_DestroyTexture(font_texture);
-
 		// mouse draws
-		mouse_cursor_rect.x = (int) ((float) mouse.x * scale_x) - 7;
-		mouse_hotspot.x = mouse_cursor_rect.x;
-		mouse_cursor_rect.y = (int) ((float) mouse.y * scale_y) - 7;
-		mouse_hotspot.y = mouse_cursor_rect.y;
+		if (mouse_x > 0 && mouse_x < window_w - 1 && mouse_y > 0 && mouse_y < window_h - 1) {
+			mouse_cursor_rect.x = (int) ((float) mouse_x * scale_x) - 7;
+			mouse_hotspot.x = mouse_cursor_rect.x;
+			mouse_cursor_rect.y = (int) ((float) mouse_y * scale_y) - 7;
+			mouse_hotspot.y = mouse_cursor_rect.y;
 
-		// if hover and mouse down : mouse = grab
-		// if mouse = grab : adjust knob on mouse move
-		// if mouse = grab and mouse up : mouse = normal
+			// if hover and mouse down : mouse = grab
+			// if mouse = grab : adjust knob on mouse move
+			// if mouse = grab and mouse up : mouse = normal
 
-		mouse_hover = 0;
-		for (int i = 0; i < KNOB_COUNT; i++) {
-			if (collision_detection(knobs[i].rect, mouse_hotspot)) {
-				mouse_hover = 1;
-				if (!mouse_grab) mouse_target = i;
+			mouse_hover = 0;
+			for (int i = 0; i < KNOB_COUNT; i++) {
+				if (collision_detection(knobs[i].rect, mouse_hotspot)) {
+					mouse_hover = 1;
+					if (!mouse_grab) mouse_target = i;
+				}
 			}
-		}
-		if (mouse_hover && mouse.button_left) mouse_grab = 1;
-		if (!mouse.button_left) mouse_grab = 0;
-		if (mouse_grab) {
-			// change value based on mouse movement
-			knob_update_relative(&knobs[mouse_target], (mouse.rel_x - mouse.rel_y) * 0.001f);
-			SDL_RenderCopy(renderer, mouse_hand_closed, NULL, &mouse_cursor_rect);
-		}
-		else if (mouse_hover) {
-			SDL_RenderCopy(renderer, mouse_hand_open, NULL, &mouse_cursor_rect);
-		}
-		else {
-			SDL_RenderCopy(renderer, mouse_pointer, NULL, &mouse_cursor_rect);
+			if (mouse_hover && (mouse_buttons & 1)) mouse_grab = 1;
+			if (!(mouse_buttons & 1)) mouse_grab = 0;
+			if (mouse_grab) {
+				// change value based on mouse movement
+				knob_update_relative(&knobs[mouse_target], (mouse_rel_x - mouse_rel_y) * 0.001f);
+				SDL_RenderCopy(renderer, mouse_hand_closed, NULL, &mouse_cursor_rect);
+			}
+			else if (mouse_hover) {
+				SDL_RenderCopy(renderer, mouse_hand_open, NULL, &mouse_cursor_rect);
+			}
+			else {
+				SDL_RenderCopy(renderer, mouse_pointer, NULL, &mouse_cursor_rect);
+			}
 		}
 
 		// graphics overscale
@@ -272,8 +242,9 @@ int main(int argc, char* args[]) {
 		SDL_RenderCopy(renderer, overscale_texture, NULL, NULL);
 		SDL_RenderPresent(renderer);
 
-		mouse_process(&mouse, &window_info);
-
+		// MOUSE SHIT
+		mouse_buttons = SDL_GetMouseState(&mouse_x, &mouse_y);
+		SDL_GetRelativeMouseState(&mouse_rel_x, &mouse_rel_y);
 		// EVENT SHIT
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
@@ -289,18 +260,9 @@ int main(int argc, char* args[]) {
 					}
 					break;
 				case SDL_WINDOWEVENT:
-					if (event.window.event == SDL_WINDOWEVENT_MOVED) {
-						window_x = event.window.data1;
-						window_y = event.window.data2;
-						window_info.x = window_x;
-						window_info.y = window_y;
-						printf("window position changed: %d x %d\n", window_x, window_y);
-					}
 					if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
 						window_w = event.window.data1;
 						window_h = event.window.data2;
-						window_info.w = window_w;
-						window_info.h = window_h;
 						printf("window size changed: %d x %d\n", window_w, window_h);
 						update_scale();
 					}
