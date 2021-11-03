@@ -7,8 +7,9 @@ int main(int argc, char* args[]) {
 
 	SDL_Init(SDL_INIT_EVERYTHING);
 	SDL_Event event;
-	SDL_Window * window = SDL_CreateWindow("watttt", 200, 200,
-		window_w, window_h, SDL_WINDOW_RESIZABLE);
+
+	SDL_Rect window_rect = { 200, 200, window_w, window_h };
+	SDL_Window * window = SDL_CreateWindow("watttt", window_rect.x, window_rect.y, window_rect.w, window_rect.h, SDL_WINDOW_RESIZABLE);
 	SDL_Renderer * renderer = SDL_CreateRenderer(window,
 		-1, SDL_RENDERER_PRESENTVSYNC);
 	
@@ -33,10 +34,16 @@ int main(int argc, char* args[]) {
 					}
 					break;
 				case SDL_WINDOWEVENT:
+					if (event.window.event == SDL_WINDOWEVENT_MOVED) {
+						window_rect.x = event.window.data1;
+						window_rect.y = event.window.data2;
+						printf("window position changed: %d x %d\n", window_rect.x, window_rect.y);
+					}
 					if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-						printf("window size changed\n");
 						window_w = event.window.data1;
 						window_h = event.window.data2;
+						window_rect.w = window_w;
+						window_rect.h = window_h;
 						printf("window size changed: %d x %d\n", window_w, window_h);
 					}
 					break;

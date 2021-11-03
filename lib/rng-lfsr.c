@@ -1,6 +1,3 @@
-// XXX legacy file
-// referenced in past projects
-
 #include <stdint.h>
 
 int rng_lfsr_8bit_next(uint8_t *val, int max) {

@@ -11,6 +11,7 @@ typedef struct {
 	int button_x2;
 } mouse_info;
 
+
 mouse_info mouse_init() {
 	mouse_info mouse = { 0 };
 	return mouse;
