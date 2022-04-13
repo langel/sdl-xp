@@ -4,29 +4,14 @@
 #include "lib/core.c"
 
 
-int window_w = 800;
-int window_h = 400;
+int texture_w = 420;
+int texture_h = 200;
+int window_w = 1280;
+int window_h = 720;
 
 unsigned long time_counter = 0;
 
 int keys_pressed[256];
-
-void log_spec(SDL_AudioSpec *as) {
-	printf(
-		" freq______%5d\n"
-		" format____%5d\n"
-		" channels__%5d\n"
-		" silence___%5d\n"
-		" samples___%5d\n"
-		" size______%5d\n\n",
-		(int) as->freq,
-		(int) as->format,
-		(int) as->channels,
-		(int) as->silence,
-		(int) as->samples,
-		(int) as->size
-	);
-}
 
 
 
@@ -51,26 +36,31 @@ int main(int argc, char* args[]) {
 	SDL_Window * window = SDL_CreateWindow("squirrel3 trial", window_rect.x, window_rect.y, window_rect.w, window_rect.h, SDL_WINDOW_RESIZABLE);
 	SDL_Renderer * renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
 
-	int surface_pixel_count = window_w * window_h;
-	int surface_size = window_w * window_h * 4;
+	int surface_pixel_count = texture_w * texture_h;
+	int surface_size = texture_w * texture_h * 4;
+	int surface_width = texture_w * 4;
 	uint32_t * surface_pixels = malloc(surface_size);
-	SDL_Texture * texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, window_w, window_h);
+	SDL_Texture * texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, texture_w, texture_h);
 
 	SDL_SetRenderTarget(renderer, NULL);
 	renderer_set_color(renderer, &palette[2]);
 	SDL_RenderClear(renderer);
 
-	int x = 0;
+	uint32_t x = 0;
+	float xf = 0.f;
+	float xf_speed = 0.25f;
 
 	int running = 1;
 	while (running) {
 
-		for (int i = 0; i < surface_pixel_count; i++) {
-			surface_pixels[i] = squirrel3((uint32_t) (i + x), 0);
+		x = xf;
+		for (uint32_t i = 0; i < surface_pixel_count; i++) {
+			surface_pixels[i] = squirrel3(i + x, 0);
 		}
-		x++;
+		//xf += xf_speed + xf_speed * (float) surface_width;
+		xf += xf_speed * (float) surface_width;
 
-		SDL_UpdateTexture(texture, NULL, surface_pixels, window_w * 4);
+		SDL_UpdateTexture(texture, NULL, surface_pixels, surface_width);
 		SDL_RenderCopy(renderer, texture, NULL, NULL);
 		SDL_RenderPresent(renderer);
 		
