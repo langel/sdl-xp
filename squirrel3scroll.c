@@ -1,7 +1,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
 #include "lib/core.c"
 
 
@@ -34,7 +33,7 @@ int main(int argc, char* args[]) {
 
 	SDL_Event event;
 	SDL_Rect window_rect = { 200, 200, window_w, window_h };
-	SDL_Window * window = SDL_CreateWindow("perlin noise trial", window_rect.x, window_rect.y, window_rect.w, window_rect.h, SDL_WINDOW_RESIZABLE);
+	SDL_Window * window = SDL_CreateWindow("squirrel3 trial", window_rect.x, window_rect.y, window_rect.w, window_rect.h, SDL_WINDOW_RESIZABLE);
 	SDL_Renderer * renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
 
 	int surface_pixel_count = texture_w * texture_h;
@@ -47,22 +46,19 @@ int main(int argc, char* args[]) {
 	renderer_set_color(renderer, &palette[2]);
 	SDL_RenderClear(renderer);
 
-	double xf = 0.f;
-	double xf_speed = 0.0000125f;
+	uint32_t x = 0;
+	float xf = 0.f;
+	float xf_speed = 0.25f;
 
 	int running = 1;
 	while (running) {
 
+		x = xf;
 		for (uint32_t i = 0; i < surface_pixel_count; i++) {
-			//surface_pixels[i] = squirrel3(i + x, 0);
-			double temp = noise((double) i / (double) surface_width + xf, 1.0, 1.0);
-			//double temp = 0.5;
-			uint32_t color = 255;
-			color += (uint32_t) (temp * 256);
-			surface_pixels[i] = color; 
+			surface_pixels[i] = squirrel3(i + x, 0);
 		}
 		//xf += xf_speed + xf_speed * (float) surface_width;
-		xf += xf_speed * (double) surface_width;
+		xf += xf_speed * (float) surface_width;
 
 		SDL_UpdateTexture(texture, NULL, surface_pixels, surface_width);
 		SDL_RenderCopy(renderer, texture, NULL, NULL);
