@@ -48,21 +48,24 @@ int main(int argc, char* args[]) {
 	SDL_RenderClear(renderer);
 
 	double xf = 0.f;
-	double xf_speed = 0.0000125f;
+	double xf_speed = 0.0125f;
 
 	int running = 1;
 	while (running) {
 
 		for (uint32_t i = 0; i < surface_pixel_count; i++) {
 			//surface_pixels[i] = squirrel3(i + x, 0);
-			double temp = noise((double) i / (double) surface_width + xf, 1.0, 1.0);
-			//double temp = 0.5;
-			uint32_t color = 255;
-			color += (uint32_t) (temp * 256);
+			double x = (double) (i % texture_w) * 0.125;
+			double y = round((double) (i / texture_w)) * 0.125; 
+			uint32_t temp = noise((x + xf), y + xf, xf) * 255;
+			uint32_t color = temp;
+			color += temp << 8;
+			color += temp << 16;
+			color += temp << 24;
 			surface_pixels[i] = color; 
 		}
 		//xf += xf_speed + xf_speed * (float) surface_width;
-		xf += xf_speed * (double) surface_width;
+		xf += xf_speed;
 
 		SDL_UpdateTexture(texture, NULL, surface_pixels, surface_width);
 		SDL_RenderCopy(renderer, texture, NULL, NULL);
