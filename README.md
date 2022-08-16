@@ -65,3 +65,13 @@ Quad the Size (4x) : 1680x800
 
 hardware limitations: resizing the pixel density costs one visible frame of the old pixel density in the new pixel density; if new one is bigger missing data is filled with noise
 
+### 4 Video Modes?
+each mode has 84,000 pixels and a different display aspect ratio and pixel aspect ratio
+| id | width | height | dar | par | potential tile size | tile fill |
+|---|---|---|---|--|
+| 0 | 420 | 200 | 21/10 | 1.18125 | 10x10 | 42x20 |
+| 1 | 400 | 210 | 40/21 | 1.07143 | 10x10 | 40x21 |
+| 2 | 375 | 224 | gross | 0.94168 | 15x16 | 25x14 |
+| 3 | 350 | 240 | 35/24 | 0.82031 | 10x16 | 35x15 | 
+
+
