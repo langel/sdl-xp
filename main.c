@@ -12,20 +12,6 @@ int window_h = 720;
 
 unsigned long time_counter = 0;
 
-int keys_pressed[256];
-
-
-
-SDL_Color palette[8] = {
-	{ 0xf0, 0xf0, 0xdc, 0xff }, // white
-	{ 0xfa, 0xc8, 0x00, 0xff }, // yellow
-	{ 0x10, 0xc8, 0x40, 0xff }, // green
-	{ 0x00, 0xa0, 0xc8, 0xff }, // blue
-	{ 0xd2, 0x40, 0x40, 0xff }, // red
-	{ 0xa0, 0x69, 0x4b, 0xff }, // brown
-	{ 0x73, 0x64, 0x64, 0xff }, // grey
-	{ 0x10, 0x18, 0x20, 0xff }, // black
-};
 
 
 int main(int argc, char* args[]) {
@@ -34,58 +20,120 @@ int main(int argc, char* args[]) {
 
 	SDL_Event event;
 	SDL_Rect window_rect = { 200, 200, window_w, window_h };
-	SDL_Window * window = SDL_CreateWindow("lerp trial", window_rect.x, window_rect.y, window_rect.w, window_rect.h, SDL_WINDOW_RESIZABLE);
+	SDL_Window * window = SDL_CreateWindow("interpolation trial", window_rect.x, window_rect.y, window_rect.w, window_rect.h, SDL_WINDOW_RESIZABLE);
 	SDL_Renderer * renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
 
 	int surface_pixel_count = texture_w * texture_h;
 	int surface_size = texture_w * texture_h * 4;
 	int surface_width = texture_w * 4;
 	uint32_t * surface_pixels = malloc(surface_size);
-	SDL_Texture * texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, texture_w, texture_h);
 
-	SDL_SetRenderTarget(renderer, NULL);
-	renderer_set_color(renderer, &palette[7]);
-	SDL_RenderClear(renderer);
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
+	SDL_Texture * fcv_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, texture_w, texture_h);
+	#define overscale_amount 3
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
+	SDL_Texture * overscale_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, texture_w * overscale_amount, texture_h * overscale_amount);
 
-	float points[32] = { 0.f };
-	for (int i = 0; i < 32; i++) {
+	#define pixels_per_point 32
+	#define point_array_length 32
+	float points[point_array_length] = { 0.f };
+	for (int i = 0; i < point_array_length; i++) {
 		points[i] = squirrel3_zero_float(i + 1337, 1337);
 	}
-	int pixels_per_point = 16;
+	int lastylin = 0;
+	int lastybic = 0;
+
+	// frame throttler variables
+	uint64_t start;
+	uint64_t end;
+	double elapsed;
 
 	int running = 1;
 	while (running) {
+		start = SDL_GetPerformanceCounter();
 
 		// clear surface
 		for (uint32_t i = 0; i < surface_pixel_count; i++) {
 			surface_pixels[i] = 0;
 		}
 
+		// draw reference lines
+		for (int x = 0; x < texture_w; x++) {
+			// green mid lines
+			surface_pixels[x + (int) ((float) texture_h * 0.25f) * texture_w] += 0x001f00ff;
+			surface_pixels[x + (int) ((float) texture_h * 0.75f) * texture_w] += 0x001f00ff;
+			// purple median line
+			surface_pixels[x + (int) ((float) texture_h * 0.50f) * texture_w] += 0x1f001fff;
+			// red danger lines
+			surface_pixels[x + (int) ((float) texture_h * 0.05f) * texture_w] += 0x3f0000ff;
+			surface_pixels[x + (int) ((float) texture_h * 0.95f) * texture_w] += 0x3f0000ff;
+		}
+		for (int y = 0; y < texture_h; y++) {
+			for (int i = 0; i < point_array_length; i++) {
+				int x = i * pixels_per_point;
+				if (x < texture_w) {
+					surface_pixels[x + y * texture_w] += 0x001f00ff;
+				}
+			}
+		}
+
+		// draw linear and bicubic interpretations of points
 		for (int x = 0; x < texture_w; x++) {
 			float pos = (float) x / (float) pixels_per_point;
 			int pos_int = (int) pos;
 			float pos_dec = pos - pos_int;
 
-			int y = 0;
-			y = (int) ((float) texture_h * lerp((float) points[pos_int], (float) points[pos_int + 1], pos_dec));
-			if (y < 0) y = 0;
-			if (y >= texture_h) y = texture_h - 1;
-			surface_pixels[x + texture_w * y] = 0xff8800ff;
+			int y;
+
+			int bound_y(int y) {
+				if (y < 0) y = 0;
+				if (y >= texture_h) y = texture_h - 1;
+				return y;
+			}
+
+			void y_backfill(int lasty, int cury, uint32_t color_add) {
+				// draw up
+				for (int i = lasty + 1; i < cury; i++) {
+					surface_pixels[x + texture_w * i] += color_add;
+				}
+				// draw down
+				for (int i = lasty - 1; i > cury; i--) {
+					surface_pixels[x + texture_w * i] += color_add;
+				}
+			}
+
+			// y of linear
+			y = (int) roundf((float) texture_h * lerp((float) points[pos_int], (float) points[pos_int + 1], pos_dec));
+			y = bound_y(y);
+			if (x) y_backfill(lastylin, y, 0xf0700000);
+			surface_pixels[x + texture_w * y] += 0xf0700000;
+			lastylin = y;
+
+			// y of bicubic
 			float cuboints[4];
 			cuboints[0] = (pos_int == 0) ? 0.f : points[pos_int - 1];
 			cuboints[1] = points[pos_int + 0];
 			cuboints[2] = points[pos_int + 1];
 			cuboints[3] = points[pos_int + 2];
 			y = (int) ((float) texture_h * cuberp(cuboints, pos_dec));
-			if (y < 0) y = 0;
-			if (y >= texture_h) y = texture_h - 1;
-			surface_pixels[x + texture_w * y] = 0x0088ffff;
+			y = bound_y(y);
+			if (x) y_backfill(lastybic, y, 0x0070f000);
+			surface_pixels[x + texture_w * y] += 0x0070f000;
+			lastybic = y;
 		}
 
-		SDL_UpdateTexture(texture, NULL, surface_pixels, surface_width);
-		SDL_RenderCopy(renderer, texture, NULL, NULL);
+		SDL_UpdateTexture(fcv_texture, NULL, surface_pixels, surface_width);
+		SDL_SetRenderTarget(renderer, overscale_texture);
+		SDL_RenderCopy(renderer, fcv_texture, NULL, NULL);
+		SDL_SetRenderTarget(renderer, NULL);
+		SDL_RenderCopy(renderer, overscale_texture, NULL, NULL);
 		SDL_RenderPresent(renderer);
 		
+		// fps throttle
+		end = SDL_GetPerformanceCounter();
+		elapsed = (double) (end - start) / ( (double) SDL_GetPerformanceFrequency() * 1000.0);
+		// only delay if framerate is above 60
+		if (fps > 60) SDL_Delay(floor(1000.0 / 60.0 - elapsed));
 
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
@@ -93,10 +141,6 @@ int main(int argc, char* args[]) {
 					running = 0;
 					break;
 				case SDL_KEYDOWN:
-					if (keys_pressed[event.key.keysym.scancode] == 0) {
-						keys_pressed[event.key.keysym.scancode] = 1;
-		//				printf( "keydown: %8s %3d\n", SDL_GetKeyName(event.key.keysym.sym), event.key.keysym.scancode);
-					}
 					switch (event.key.keysym.sym) {
 						case SDLK_ESCAPE:
 							running = 0;
@@ -104,7 +148,6 @@ int main(int argc, char* args[]) {
 					}
 					break;
 				case SDL_KEYUP:
-					keys_pressed[event.key.keysym.scancode] = 0;
 		//			printf( "  keyup: %8s %3d\n", SDL_GetKeyName(event.key.keysym.sym), event.key.keysym.scancode);
 				case SDL_WINDOWEVENT:
 					if (event.window.event == SDL_WINDOWEVENT_MOVED) {
