@@ -25,8 +25,8 @@ float lerp2dp(float a, float b, float c, float d, float tx, float ty) {
 // CUBIC INTERPOLATION
 
 // ripped and transcoded from https://www.paulinternet.nl/?page=bicubic
-// imprecise cubic linear (1D)
-float lerpcubic(float p[4], float x) {
+// imprecise cubic (1D)
+float cuberp(float p[4], float x) {
 	return p[1] + 0.5 * 
 		x * (p[2] - p[0] + 
 			x * (2.0*p[0] - 5.0*p[1] + 4.0*p[2] - p[3] + 
@@ -35,22 +35,22 @@ float lerpcubic(float p[4], float x) {
 		);
 }
 
-// imprecise bicubic linear (2D)
-float lerpbicubic(float p[4][4], float x, float y) {
+// imprecise bicubic (2D)
+float bicuberp(float p[4][4], float x, float y) {
 	float arr[4];
-	arr[0] = lerpcubic(p[0], y);
-	arr[1] = lerpcubic(p[1], y);
-	arr[2] = lerpcubic(p[2], y);
-	arr[3] = lerpcubic(p[3], y);
-	return lerpcubic(arr, x);
+	arr[0] = cuberp(p[0], y);
+	arr[1] = cuberp(p[1], y);
+	arr[2] = cuberp(p[2], y);
+	arr[3] = cuberp(p[3], y);
+	return cuberp(arr, x);
 }
 
-// imprecise tricubic linear (3D)
-float lerptricubic(float p[4][4][4], float x, float y, float z) {
+// imprecise tricubic (3D)
+float tricuberp(float p[4][4][4], float x, float y, float z) {
 	float arr[4];
-	arr[0] = lerpbicubic(p[0], y, z);
-	arr[1] = lerpbicubic(p[1], y, z);
-	arr[2] = lerpbicubic(p[2], y, z);
-	arr[3] = lerpbicubic(p[3], y, z);
-	return lerpcubic(arr, x);
+	arr[0] = bicuberp(p[0], y, z);
+	arr[1] = bicuberp(p[1], y, z);
+	arr[2] = bicuberp(p[2], y, z);
+	arr[3] = bicuberp(p[3], y, z);
+	return cuberp(arr, x);
 }

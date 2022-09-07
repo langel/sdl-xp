@@ -20,7 +20,8 @@ int perlin_series[512] = {
 
 double fade(double t) { return t * t * t * (t * (t * 6 - 15) + 10); }
 
-double lerp(double t, double a, double b) { return a + t * (b - a); }
+// XXX defined elsewhere using float
+//double lerp(double t, double a, double b) { return a + t * (b - a); }
 
 double grad(int hash, double x, double y, double z) {
 	int h = hash & 15;

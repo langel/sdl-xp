@@ -34,7 +34,7 @@ int main(int argc, char* args[]) {
 
 	SDL_Event event;
 	SDL_Rect window_rect = { 200, 200, window_w, window_h };
-	SDL_Window * window = SDL_CreateWindow("perlin noise trial", window_rect.x, window_rect.y, window_rect.w, window_rect.h, SDL_WINDOW_RESIZABLE);
+	SDL_Window * window = SDL_CreateWindow("lerp trial", window_rect.x, window_rect.y, window_rect.w, window_rect.h, SDL_WINDOW_RESIZABLE);
 	SDL_Renderer * renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
 
 	int surface_pixel_count = texture_w * texture_h;
@@ -44,28 +44,43 @@ int main(int argc, char* args[]) {
 	SDL_Texture * texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, texture_w, texture_h);
 
 	SDL_SetRenderTarget(renderer, NULL);
-	renderer_set_color(renderer, &palette[2]);
+	renderer_set_color(renderer, &palette[7]);
 	SDL_RenderClear(renderer);
 
-	double xf = 0.f;
-	double xf_speed = 0.0125f;
+	float points[32] = { 0.f };
+	for (int i = 0; i < 32; i++) {
+		points[i] = squirrel3_zero_float(i + 1337, 1337);
+	}
+	int pixels_per_point = 16;
 
 	int running = 1;
 	while (running) {
 
+		// clear surface
 		for (uint32_t i = 0; i < surface_pixel_count; i++) {
-			//surface_pixels[i] = squirrel3(i + x, 0);
-			double x = (double) (i % texture_w) * 0.125;
-			double y = round((double) (i / texture_w)) * 0.125; 
-			uint32_t temp = noise((x + xf), y + xf, xf) * 255;
-			uint32_t color = temp;
-			color += temp << 8;
-			color += temp << 16;
-			color += temp << 24;
-			surface_pixels[i] = color; 
+			surface_pixels[i] = 0;
 		}
-		//xf += xf_speed + xf_speed * (float) surface_width;
-		xf += xf_speed;
+
+		for (int x = 0; x < texture_w; x++) {
+			float pos = (float) x / (float) pixels_per_point;
+			int pos_int = (int) pos;
+			float pos_dec = pos - pos_int;
+
+			int y = 0;
+			y = (int) ((float) texture_h * lerp((float) points[pos_int], (float) points[pos_int + 1], pos_dec));
+			if (y < 0) y = 0;
+			if (y >= texture_h) y = texture_h - 1;
+			surface_pixels[x + texture_w * y] = 0xff8800ff;
+			float cuboints[4];
+			cuboints[0] = (pos_int == 0) ? 0.f : points[pos_int - 1];
+			cuboints[1] = points[pos_int + 0];
+			cuboints[2] = points[pos_int + 1];
+			cuboints[3] = points[pos_int + 2];
+			y = (int) ((float) texture_h * cuberp(cuboints, pos_dec));
+			if (y < 0) y = 0;
+			if (y >= texture_h) y = texture_h - 1;
+			surface_pixels[x + texture_w * y] = 0x0088ffff;
+		}
 
 		SDL_UpdateTexture(texture, NULL, surface_pixels, surface_width);
 		SDL_RenderCopy(renderer, texture, NULL, NULL);
