@@ -12,6 +12,7 @@ int window_h = 720;
 
 unsigned long time_counter = 0;
 
+int fps;
 
 
 int main(int argc, char* args[]) {
@@ -22,6 +23,9 @@ int main(int argc, char* args[]) {
 	SDL_Rect window_rect = { 200, 200, window_w, window_h };
 	SDL_Window * window = SDL_CreateWindow("interpolation trial", window_rect.x, window_rect.y, window_rect.w, window_rect.h, SDL_WINDOW_RESIZABLE);
 	SDL_Renderer * renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
+	SDL_DisplayMode display_mode;
+	SDL_GetDisplayMode(0, 0, &display_mode);
+	fps = display_mode.refresh_rate;
 
 	int surface_pixel_count = texture_w * texture_h;
 	int surface_size = texture_w * texture_h * 4;
@@ -34,7 +38,7 @@ int main(int argc, char* args[]) {
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 	SDL_Texture * overscale_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, texture_w * overscale_amount, texture_h * overscale_amount);
 
-	#define pixels_per_point 32
+	#define pixels_per_point 16
 	#define point_array_length 32
 	float points[point_array_length] = { 0.f };
 	for (int i = 0; i < point_array_length; i++) {
@@ -42,6 +46,11 @@ int main(int argc, char* args[]) {
 	}
 	int lastylin = 0;
 	int lastybic = 0;
+
+	float x_pos = 0.f;
+	float x_vel = 0.00753f;
+	int pos_int = 0;
+	float pos_dec = 0.f;
 
 	// frame throttler variables
 	uint64_t start;
@@ -68,6 +77,7 @@ int main(int argc, char* args[]) {
 			surface_pixels[x + (int) ((float) texture_h * 0.05f) * texture_w] += 0x3f0000ff;
 			surface_pixels[x + (int) ((float) texture_h * 0.95f) * texture_w] += 0x3f0000ff;
 		}
+		// vertical grid lines
 		for (int y = 0; y < texture_h; y++) {
 			for (int i = 0; i < point_array_length; i++) {
 				int x = i * pixels_per_point;
@@ -79,9 +89,9 @@ int main(int argc, char* args[]) {
 
 		// draw linear and bicubic interpretations of points
 		for (int x = 0; x < texture_w; x++) {
-			float pos = (float) x / (float) pixels_per_point;
-			int pos_int = (int) pos;
-			float pos_dec = pos - pos_int;
+			float pos = (float) x / (float) pixels_per_point + x_pos;
+			pos_int = (int) pos;
+			pos_dec = pos - pos_int;
 
 			int y;
 
@@ -102,8 +112,12 @@ int main(int argc, char* args[]) {
 				}
 			}
 
+			float point_at_pos(int pos) {
+				return points[pos % point_array_length];
+			}
+
 			// y of linear
-			y = (int) roundf((float) texture_h * lerp((float) points[pos_int], (float) points[pos_int + 1], pos_dec));
+			y = (int) roundf((float) texture_h * lerp(point_at_pos(pos_int), point_at_pos(pos_int + 1), pos_dec));
 			y = bound_y(y);
 			if (x) y_backfill(lastylin, y, 0xf0700000);
 			surface_pixels[x + texture_w * y] += 0xf0700000;
@@ -111,16 +125,18 @@ int main(int argc, char* args[]) {
 
 			// y of bicubic
 			float cuboints[4];
-			cuboints[0] = (pos_int == 0) ? 0.f : points[pos_int - 1];
-			cuboints[1] = points[pos_int + 0];
-			cuboints[2] = points[pos_int + 1];
-			cuboints[3] = points[pos_int + 2];
+			cuboints[0] = (pos_int == 0) ? 0.f : point_at_pos(pos_int - 1);
+			cuboints[1] = point_at_pos(pos_int + 0);
+			cuboints[2] = point_at_pos(pos_int + 1);
+			cuboints[3] = point_at_pos(pos_int + 2);
 			y = (int) ((float) texture_h * cuberp(cuboints, pos_dec));
 			y = bound_y(y);
 			if (x) y_backfill(lastybic, y, 0x0070f000);
 			surface_pixels[x + texture_w * y] += 0x0070f000;
 			lastybic = y;
 		}
+		x_pos += x_vel;
+		points[(pos_int + 2) % point_array_length] = squirrel3_zero_float(pos_int + 1337, 1337);
 
 		SDL_UpdateTexture(fcv_texture, NULL, surface_pixels, surface_width);
 		SDL_SetRenderTarget(renderer, overscale_texture);
