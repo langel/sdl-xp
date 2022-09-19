@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdio.h>
+#include <sys/stat.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "lib/core.c"
@@ -57,8 +58,16 @@ int main(int argc, char* args[]) {
 	uint64_t end;
 	double elapsed;
 
+	devpipe_init();
+
 	int running = 1;
+	int frame_counter = 0;
 	while (running) {
+		// check for main.c updates
+		if (++frame_counter % 30 == 0) {
+			if (devpipe_check_update()) running = 0;
+		}
+
 		start = SDL_GetPerformanceCounter();
 
 		// clear surface
@@ -160,6 +169,7 @@ int main(int argc, char* args[]) {
 					switch (event.key.keysym.sym) {
 						case SDLK_ESCAPE:
 							running = 0;
+							devpipe_kill_cycle();
 							break;
 					}
 					break;
