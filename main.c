@@ -58,9 +58,15 @@ int main(int argc, char* args[]) {
 	uint64_t end;
 	double elapsed;
 
-	devpipe_init();
+	window_state_load(window);
+	devpipe_init(window);
 
 	int running = 1;
+	void kill() {
+		running = 0;
+		window_state_save(window);
+		devpipe_kill_cycle();
+	}
 	int frame_counter = 0;
 	while (running) {
 		// check for main.c updates
@@ -163,13 +169,12 @@ int main(int argc, char* args[]) {
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 				case SDL_QUIT:
-					running = 0;
+					kill();
 					break;
 				case SDL_KEYDOWN:
 					switch (event.key.keysym.sym) {
 						case SDLK_ESCAPE:
-							running = 0;
-							devpipe_kill_cycle();
+							kill();
 							break;
 					}
 					break;

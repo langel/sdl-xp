@@ -3,13 +3,14 @@ int devpipe_watch_time;
 char * devpipe_watch_file = "main.c";
 
 int devpipe_get_watch_time() {
-	struct stat attr;
-	stat(devpipe_watch_file, &attr);
-	return (int) attr.st_mtime;
+	struct stat buff;
+	stat(devpipe_watch_file, &buff);
+	return (int) buff.st_mtime;
 }
 
-void devpipe_init() {
+void devpipe_init(SDL_Window * window) {
 	devpipe_watch_time = devpipe_get_watch_time();
+	window_focus(window);
 }
 
 int devpipe_check_update() {

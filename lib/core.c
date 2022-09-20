@@ -1,7 +1,6 @@
 
 typedef uint32_t u32;
 
-#include "./devpipe.h"
 #include "./generic.c"
 #include "./knob.c"
 #include "./lerp.c"
@@ -11,3 +10,5 @@ typedef uint32_t u32;
 #include "./rng-perlin.c"
 #include "./rng-squirrel3.c"
 #include "./window.c"
+
+#include "./devpipe.c"
