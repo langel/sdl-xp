@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -58,13 +59,13 @@ int main(int argc, char* args[]) {
 	uint64_t end;
 	double elapsed;
 
-	window_state_load(window);
+	window_state_load(window, "window");
 	devpipe_init(window);
 
 	int running = 1;
 	void kill() {
 		running = 0;
-		window_state_save(window);
+		window_state_save(window, "window");
 		devpipe_kill_cycle();
 	}
 	int frame_counter = 0;
@@ -73,7 +74,7 @@ int main(int argc, char* args[]) {
 		if (++frame_counter % 30 == 0) {
 			if (devpipe_check_update()) {
 				running = 0;
-				window_state_save(window);
+				window_state_save(window, "window");
 			}
 		}
 

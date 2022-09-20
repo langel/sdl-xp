@@ -1,4 +1,5 @@
 
+#define window_file_ext ".cfg"
 
 // focus window
 void window_focus(SDL_Window * window) {
@@ -17,15 +18,19 @@ void window_ontop_set_false(SDL_Window * window) {
 }
 
 
-void window_state_load(SDL_Window * window) {
+void window_state_load(SDL_Window * window, char * filename) {
 	// XXX somewhere needs to check pos/size is visible on system
 	//int display_count = SDL_GetNumVideoDisplays(window);
 	//int display_current = SDL_GetWindowDisplayIndex(window);
 	//SDL_Rect display_bounds = SDL_GetDisplayBounds(display_current, display_bounds);
-	struct stat buff;
-	if (stat("window.cfg", &buff) != 0) return;
+	char path[256] = { '\0' };
+	strcat(path, filename);
+	strcat(path, window_file_ext);
+	printf("%s\n", path);
+	struct stat buffer;
+	if (stat(path, &buffer) != 0) return;
 	SDL_Rect rect;
-	FILE * fp = fopen("window.cfg", "r");
+	FILE * fp = fopen(path, "r");
 	fread(&rect, sizeof(struct SDL_Rect), 1, fp);
 	fclose(fp);
 	//printf("window position: %d x %d\n", rect.x, rect.y);
@@ -34,7 +39,7 @@ void window_state_load(SDL_Window * window) {
 	SDL_SetWindowPosition(window, rect.x, rect.y);
 }
 
-void window_state_save(SDL_Window * window) {
+void window_state_save(SDL_Window * window, char * filename) {
 	SDL_Rect rect;
 	SDL_GetWindowPosition(window, &rect.x, &rect.y);
 	// XXX struggling to remember window size
@@ -42,7 +47,11 @@ void window_state_save(SDL_Window * window) {
 //	SDL_GetWindowSize(window, &rect.w, &rect.h);
 	//printf("window position: %d x %d\n", rect.x, rect.y);
 	//printf("window dimensions: %d x %d\n", rect.w, rect.h);
-	FILE * fp = fopen("window.cfg", "w");
+	char path[256] = { '\0' };
+	strcat(path, filename);
+	strcat(path, window_file_ext);
+	printf("%s\n", path);
+	FILE * fp = fopen(path, "w");
 	fwrite(&rect, sizeof(struct SDL_Rect), 1, fp);
 	fclose(fp);
 }
