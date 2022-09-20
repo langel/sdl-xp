@@ -1,6 +1,5 @@
 #include <math.h>
 #include <stdio.h>
-#include <string.h>
 #include <sys/stat.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -40,19 +39,6 @@ int main(int argc, char* args[]) {
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 	SDL_Texture * overscale_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, texture_w * overscale_amount, texture_h * overscale_amount);
 
-	#define pixels_per_point 16
-	#define point_array_length 32
-	float points[point_array_length] = { 0.f };
-	for (int i = 0; i < point_array_length; i++) {
-		points[i] = squirrel3_zero_float(i + 1337, 1337);
-	}
-	int lastylin = 0;
-	int lastybic = 0;
-
-	float x_pos = 0.f;
-	float x_vel = 0.00753f;
-	int pos_int = 0;
-	float pos_dec = 0.f;
 
 	// frame throttler variables
 	uint64_t start;
@@ -84,78 +70,6 @@ int main(int argc, char* args[]) {
 		for (uint32_t i = 0; i < surface_pixel_count; i++) {
 			surface_pixels[i] = 0;
 		}
-
-		// draw reference lines
-		for (int x = 0; x < texture_w; x++) {
-			// green mid lines
-			surface_pixels[x + (int) ((float) texture_h * 0.275f) * texture_w] += 0x001f00ff;
-			surface_pixels[x + (int) ((float) texture_h * 0.725f) * texture_w] += 0x001f00ff;
-			// purple median line
-			surface_pixels[x + (int) ((float) texture_h * 0.50f) * texture_w] += 0x1f001fff;
-			// red danger lines
-			surface_pixels[x + (int) ((float) texture_h * 0.05f) * texture_w] += 0x3f0000ff;
-			surface_pixels[x + (int) ((float) texture_h * 0.95f) * texture_w] += 0x3f0000ff;
-		}
-		// vertical grid lines
-		for (int y = 0; y < texture_h; y++) {
-			for (int i = 0; i < 9; i++) {
-				int x = i * texture_w * 0.125 - texture_w * 0.0625;
-				if (x > 0 && x < texture_w) {
-					surface_pixels[x + y * texture_w] += 0x001f00ff;
-				}
-			}
-		}
-
-		// draw linear and bicubic interpretations of points
-		for (int x = 0; x < texture_w; x++) {
-			float pos = (float) x / (float) pixels_per_point + x_pos;
-			pos_int = (int) pos;
-			pos_dec = pos - pos_int;
-
-			int y;
-
-			int bound_y(int y) {
-				if (y < 0) y = 0;
-				if (y >= texture_h) y = texture_h - 1;
-				return y;
-			}
-
-			void y_backfill(int lasty, int cury, uint32_t color_add) {
-				// draw up
-				for (int i = lasty + 1; i < cury; i++) {
-					surface_pixels[x + texture_w * i] += color_add;
-				}
-				// draw down
-				for (int i = lasty - 1; i > cury; i--) {
-					surface_pixels[x + texture_w * i] += color_add;
-				}
-			}
-
-			float point_at_pos(int pos) {
-				return points[pos % point_array_length];
-			}
-
-			// y of linear
-			y = (int) roundf((float) texture_h * lerp(point_at_pos(pos_int), point_at_pos(pos_int + 1), pos_dec));
-			y = bound_y(y);
-			if (x) y_backfill(lastylin, y, 0xf0700000);
-			surface_pixels[x + texture_w * y] += 0xf0700000;
-			lastylin = y;
-
-			// y of bicubic
-			float cuboints[4];
-			cuboints[0] = (pos_int == 0) ? 0.f : point_at_pos(pos_int - 1);
-			cuboints[1] = point_at_pos(pos_int + 0);
-			cuboints[2] = point_at_pos(pos_int + 1);
-			cuboints[3] = point_at_pos(pos_int + 2);
-			y = (int) ((float) texture_h * cuberp(cuboints, pos_dec));
-			y = bound_y(y);
-			if (x) y_backfill(lastybic, y, 0x0070f000);
-			surface_pixels[x + texture_w * y] += 0x0070f000;
-			lastybic = y;
-		}
-		x_pos += x_vel;
-		points[(pos_int + 2) % point_array_length] = squirrel3_zero_float(pos_int + 1337, 1337);
 
 		SDL_UpdateTexture(fcv_texture, NULL, surface_pixels, surface_width);
 		SDL_SetRenderTarget(renderer, overscale_texture);

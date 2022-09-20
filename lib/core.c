@@ -9,6 +9,7 @@ typedef uint32_t u32;
 #include "./rng-lfsr.c"
 #include "./rng-perlin.c"
 #include "./rng-squirrel3.c"
+#include "./str.c"
 #include "./window.c"
 
 #include "./devpipe.c"
