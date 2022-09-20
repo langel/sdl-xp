@@ -28,8 +28,10 @@ void window_state_load(SDL_Window * window) {
 	FILE * fp = fopen("window.cfg", "r");
 	fread(&rect, sizeof(struct SDL_Rect), 1, fp);
 	fclose(fp);
-	SDL_SetWindowPosition(window, rect.x, rect.y);
+	//printf("window position: %d x %d\n", rect.x, rect.y);
+	//printf("window dimensions: %d x %d\n", rect.w, rect.h);
 	SDL_SetWindowSize(window, rect.w, rect.h);
+	SDL_SetWindowPosition(window, rect.x, rect.y);
 }
 
 void window_state_save(SDL_Window * window) {
@@ -38,6 +40,8 @@ void window_state_save(SDL_Window * window) {
 	// XXX struggling to remember window size
 	SDL_GetRendererOutputSize(SDL_GetRenderer(window), &rect.w, &rect.h);
 //	SDL_GetWindowSize(window, &rect.w, &rect.h);
+	//printf("window position: %d x %d\n", rect.x, rect.y);
+	//printf("window dimensions: %d x %d\n", rect.w, rect.h);
 	FILE * fp = fopen("window.cfg", "w");
 	fwrite(&rect, sizeof(struct SDL_Rect), 1, fp);
 	fclose(fp);

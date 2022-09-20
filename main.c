@@ -71,7 +71,10 @@ int main(int argc, char* args[]) {
 	while (running) {
 		// check for main.c updates
 		if (++frame_counter % 30 == 0) {
-			if (devpipe_check_update()) running = 0;
+			if (devpipe_check_update()) {
+				running = 0;
+				window_state_save(window);
+			}
 		}
 
 		start = SDL_GetPerformanceCounter();
