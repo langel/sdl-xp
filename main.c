@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -14,6 +15,87 @@ int window_h = 720;
 unsigned long time_counter = 0;
 
 int fps;
+
+int cell_data[420][200] = { 0 };
+int cell_temp[420][200] = { 0 };
+int cell_seed = 0;
+float chance_to_be_wall = 0.425f;
+
+void cave_new_noise() {
+	cell_seed += 1337;
+	int cell_pos = 0;
+	// initialize noise
+	for (int x = 0; x < 420; x++) {
+		for (int y= 0; y < 200; y++) {
+			cell_data[x][y] = (squirrel3_zero_float(cell_pos, cell_seed) < chance_to_be_wall) ? 1 : 0;
+			cell_pos++;
+		}
+	}
+}
+
+void cave_wall_update() {
+	memcpy(cell_temp, cell_data, sizeof(int) * 420 * 200);
+	for (int x = 0; x < 420; x++) {
+		for (int y = 0; y < 200; y++) {
+			int wall_count = 0;
+			// cells above
+			if (y > 0) {
+				if (x > 0) wall_count += cell_data[x - 1][y - 1];
+				wall_count += cell_data[x][y - 1];
+				if (x < 419) wall_count += cell_data[x + 1][y - 1];
+			}
+			// cells next door
+			if (x > 0) wall_count += cell_data[x - 1][y];
+			if (x < 419) wall_count += cell_data[x + 1][y];
+			// cells below
+			if (y < 199) {
+				if (x > 0) wall_count += cell_data[x - 1][y + 1];
+				wall_count += cell_data[x][y + 1];
+				if (x < 419) wall_count += cell_data[x + 1][y + 1];
+			}
+			// update cell value
+			int is_wall = cell_data[x][y];
+			if (wall_count < 3 && is_wall) cell_temp[x][y] = 0;
+			if (wall_count > 4 && !is_wall) cell_temp[x][y] = 1;
+			if (x == 0 || x == 419 || y == 0 || y == 199) cell_temp[x][y] = 1;
+		}
+	}
+	memcpy(cell_data, cell_temp, sizeof(int) * 420 * 200);
+}
+
+// returns cell count filled
+int flood_fill(int x, int y, int count, int color_old, int color_new) {
+	int cell = cell_data[x][y];
+	if (cell != color_old) return count;
+	cell_data[x][y] = color_new;
+	count++;
+	count = flood_fill(x, y+1, count, color_old, color_new);
+	count = flood_fill(x, y-1, count, color_old, color_new);
+	count = flood_fill(x-1, y, count, color_old, color_new);
+	count = flood_fill(x+1, y, count, color_old, color_new);
+	return count;
+}
+
+// return 0 if no cell found
+int cave_fill_cavern() {
+	for (int x = 0; x < 420; x++) {
+		for (int y = 0; y < 200; y++) {
+			if (cell_data[x][y] == 0) {
+				// return cavern data here 
+				int count = flood_fill(x, y, 0, 0, 2);
+				return count;
+			}
+		}
+	}
+	return 0;
+}
+
+
+u32 colors[3] = {
+	0x7f3f1fff, // floor
+	0x111111ff, // wall
+	0xbfbf1fff, // filled
+};
 
 
 int main(int argc, char* args[]) {
@@ -49,27 +131,11 @@ int main(int argc, char* args[]) {
 	devpipe_init(window);
 
 	// init surface noise
-	float chance_to_be_wall = 0.45f;
+	cave_new_noise();
 	for (uint32_t i = 0; i < surface_pixel_count; i++) {
-		//surface_pixels[i] = 0;
-		float val = u32_to_float_unorm(squirrel3(i, 1337));
-		surface_pixels[i] = (val > chance_to_be_wall) ? (u32) 0 : (u32) 0xffffffff;
+		surface_pixels[i] = 0;
 	}
 
-	int cell_offsets[8] = { 
-		-texture_w - 1,
-		-texture_w,
-		-texture_w + 1,
-		-1,
-		1,
-		texture_w - 1,
-		texture_w,
-		texture_w + 1,
-	};
-	for (int offset = 0; offset < 8; offset++) {
-		printf("%d ", cell_offsets[offset]);
-	}
-	int pixel_counter = 0;
 
 	int running = 1;
 	void kill() {
@@ -79,36 +145,30 @@ int main(int argc, char* args[]) {
 	}
 	int frame_counter = 0;
 	while (running) {
-		// check for main.c updates
-		if (++frame_counter % 30 == 0) {
-			if (devpipe_check_update()) {
-				running = 0;
-				window_state_save(window, "window");
-			}
-		}
 
 		start = SDL_GetPerformanceCounter();
 
-//		if (frame_counter % 2 == 0) {
-			int i = pixel_counter;
-//			for (int i = 0; i < surface_pixel_count; i++) {
-				int wall_count = 0;
-				for (int offset = 0; offset < 8; offset++) {
-					int pos = i + cell_offsets[offset];
-					if (pos >= 0 && pos < surface_pixel_count) {
-						float val = u32_to_float_unorm(surface_pixels[pos]);
-						if (val <= chance_to_be_wall) wall_count++;
-					}
-				}
-				int is_wall = (int) (u32_to_float_unorm(surface_pixels[i]) > chance_to_be_wall);
-				u32 color;
-				if (wall_count < 3 && is_wall) color = (u32) 0xffff;
-				if (wall_count > 4 && !is_wall) color = (u32) 0xffffffff;
-				surface_pixels[i] = color;
-//			}
-			pixel_counter++;
-			if (pixel_counter >= surface_pixel_count) pixel_counter = 0;
-//		}
+		if (frame_counter == 120) frame_counter = 0;
+		if (frame_counter == 0) cave_new_noise();
+		else if (frame_counter > 30 && frame_counter < 60 && frame_counter % 4 == 0) {
+			cave_wall_update();
+		}
+		if (frame_counter == 75) {
+			int success = cave_fill_cavern();
+			if (success) {
+				printf("%d ", success);
+				frame_counter--;
+			}
+			else printf("\n");
+		}
+
+
+		for (int x = 0; x < 420; x++) {
+			for (int y= 0; y < 200; y++) {
+				surface_pixels[x + y * texture_w] = colors[cell_data[x][y]];
+			}
+		}
+
 
 
 		SDL_UpdateTexture(fcv_texture, NULL, surface_pixels, surface_width);
@@ -152,6 +212,16 @@ int main(int argc, char* args[]) {
 						printf("window size changed: %d x %d\n", window_w, window_h);
 					}
 					break;
+			}
+		}
+
+		frame_counter++;
+
+		// check for main.c updates
+		if (frame_counter % 30 == 0) {
+			if (devpipe_check_update()) {
+				running = 0;
+				window_state_save(window, "window");
 			}
 		}
 	}
