@@ -48,6 +48,29 @@ int main(int argc, char* args[]) {
 	window_state_load(window, "window");
 	devpipe_init(window);
 
+	// init surface noise
+	float chance_to_be_wall = 0.45f;
+	for (uint32_t i = 0; i < surface_pixel_count; i++) {
+		//surface_pixels[i] = 0;
+		float val = u32_to_float_unorm(squirrel3(i, 1337));
+		surface_pixels[i] = (val > chance_to_be_wall) ? (u32) 0 : (u32) 0xffffffff;
+	}
+
+	int cell_offsets[8] = { 
+		-texture_w - 1,
+		-texture_w,
+		-texture_w + 1,
+		-1,
+		1,
+		texture_w - 1,
+		texture_w,
+		texture_w + 1,
+	};
+	for (int offset = 0; offset < 8; offset++) {
+		printf("%d ", cell_offsets[offset]);
+	}
+	int pixel_counter = 0;
+
 	int running = 1;
 	void kill() {
 		running = 0;
@@ -66,10 +89,27 @@ int main(int argc, char* args[]) {
 
 		start = SDL_GetPerformanceCounter();
 
-		// clear surface
-		for (uint32_t i = 0; i < surface_pixel_count; i++) {
-			surface_pixels[i] = 0;
-		}
+//		if (frame_counter % 2 == 0) {
+			int i = pixel_counter;
+//			for (int i = 0; i < surface_pixel_count; i++) {
+				int wall_count = 0;
+				for (int offset = 0; offset < 8; offset++) {
+					int pos = i + cell_offsets[offset];
+					if (pos >= 0 && pos < surface_pixel_count) {
+						float val = u32_to_float_unorm(surface_pixels[pos]);
+						if (val <= chance_to_be_wall) wall_count++;
+					}
+				}
+				int is_wall = (int) (u32_to_float_unorm(surface_pixels[i]) > chance_to_be_wall);
+				u32 color;
+				if (wall_count < 3 && is_wall) color = (u32) 0xffff;
+				if (wall_count > 4 && !is_wall) color = (u32) 0xffffffff;
+				surface_pixels[i] = color;
+//			}
+			pixel_counter++;
+			if (pixel_counter >= surface_pixel_count) pixel_counter = 0;
+//		}
+
 
 		SDL_UpdateTexture(fcv_texture, NULL, surface_pixels, surface_width);
 		SDL_SetRenderTarget(renderer, overscale_texture);

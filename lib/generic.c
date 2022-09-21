@@ -34,6 +34,15 @@ float sine_to_pos(float sine) {
 	return (sin(sine) * 0.5f) + 0.5f;
 }
 
+// returns signed normalized value between 0..1
+float u32_to_float_norm(uint32_t integer) {
+	return ((float) integer / (float) 0x7fffffff) - 1.f;
+}
+// returns unsigned normalized value between 0..1
+float u32_to_float_unorm(uint32_t integer) {
+	return (float) integer / (float) 0xffffffff;
+}
+
 float value_to_range_pos(float min, float max, float val) {
 	return (val - min) / (max - min);
 }
