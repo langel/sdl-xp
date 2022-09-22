@@ -33,6 +33,14 @@ void cave_new_noise() {
 	}
 }
 
+void cave_clear(int color) {
+	for (int x = 0; x < 420; x++) {
+		for (int y = 0; y < 200; y++) {
+			cell_data[x][y] = color;
+		}
+	}
+}
+
 void cave_wall_update() {
 	memcpy(cell_temp, cell_data, sizeof(int) * 420 * 200);
 	for (int x = 0; x < 420; x++) {
@@ -64,10 +72,19 @@ void cave_wall_update() {
 }
 
 // returns cell count filled
+int fill_stats[4];
 int flood_fill(int x, int y, int count, int color_old, int color_new) {
+	if (count == 0) {
+		fill_stats[0] = 420; fill_stats[1] = 0;
+		fill_stats[2] = 200; fill_stats[3] = 0;
+	}
 	int cell = cell_data[x][y];
 	if (cell != color_old) return count;
 	cell_data[x][y] = color_new;
+	if (x < fill_stats[0]) fill_stats[0] = x;
+	if (x > fill_stats[1]) fill_stats[1] = x;
+	if (y < fill_stats[2]) fill_stats[2] = y;
+	if (y > fill_stats[3]) fill_stats[3] = y;
 	count++;
 	count = flood_fill(x, y+1, count, color_old, color_new);
 	count = flood_fill(x, y-1, count, color_old, color_new);
@@ -76,18 +93,41 @@ int flood_fill(int x, int y, int count, int color_old, int color_new) {
 	return count;
 }
 
+typedef struct {
+	int x;
+	int y;
+	int count;
+	SDL_Rect rect;
+	int stats[4];
+} cavern_struct;
+cavern_struct caverns[256] = { 
+	{ 0, 0, 0, { 0, 0, 0, 0 } } 
+};
+int cavern_index;
+int cavern_count;
+int best_cavern;
+SDL_Rect cavern_target;
+SDL_Rect cavern_origin;
+void caverns_clear() {
+	cavern_index = 0;
+	for (int i = 0; i < 256; i++) caverns[i].count = 0;
+}
+
 // return 0 if no cell found
-int cave_fill_cavern() {
+cavern_struct cave_fill_cavern() {
 	for (int x = 0; x < 420; x++) {
 		for (int y = 0; y < 200; y++) {
 			if (cell_data[x][y] == 0) {
 				// return cavern data here 
 				int count = flood_fill(x, y, 0, 0, 2);
-				return count;
+				return (cavern_struct) { x, y, count,
+					{ fill_stats[0], fill_stats[2], fill_stats[1] - fill_stats[0], fill_stats[3] - fill_stats[2] },
+					{ fill_stats[0], fill_stats[1], fill_stats[2], fill_stats[3] }
+				};
 			}
 		}
 	}
-	return 0;
+	return (cavern_struct) { 0, 0, 0, { 0, 0, 0, 0} };
 }
 
 
@@ -147,19 +187,115 @@ int main(int argc, char* args[]) {
 	while (running) {
 
 		start = SDL_GetPerformanceCounter();
+		cavern_struct cavern;
 
-		if (frame_counter == 120) frame_counter = 0;
-		if (frame_counter == 0) cave_new_noise();
+		if (frame_counter == 200) frame_counter = 0;
+		// reset sequence
+		if (frame_counter == 0) {
+			cave_new_noise();
+			caverns_clear();
+			best_cavern = 0;
+			printf("\n\n");
+		}
 		else if (frame_counter > 30 && frame_counter < 60 && frame_counter % 4 == 0) {
 			cave_wall_update();
 		}
 		if (frame_counter == 75) {
-			int success = cave_fill_cavern();
-			if (success) {
-				printf("%d ", success);
+			cavern = cave_fill_cavern();
+			if (cavern.count) {
+				printf("%d ", cavern.count);
+				caverns[cavern_index] = cavern;
+				cavern_index++;
 				frame_counter--;
 			}
-			else printf("\n");
+			else {
+				printf("\ncavern count: %d\n", cavern_index);
+				cavern_count = cavern_index + 1;
+				cavern_index = 0;
+			}
+		}
+		if (frame_counter == 76) {
+			cavern = caverns[cavern_index];
+			if (cavern.count) {
+				if (cavern.count < 100 || cavern.count > 2500) {
+					flood_fill(cavern.x, cavern.y, 0, 2, 1);
+					caverns[cavern_index].count = 0;
+				}
+				else flood_fill(cavern.x, cavern.y, 0, 2, 0);
+				cavern_index++;
+				frame_counter--;
+			}
+		}
+		if (frame_counter == 80) {
+			int temp_size = 0;
+			for (int i = 0; i < 256; i++) {
+				cavern = caverns[i];
+				if (cavern.count > temp_size) {
+					temp_size = cavern.count;
+					best_cavern = i;
+				}
+			}
+			printf("best cavern: %d\n", best_cavern);
+			cavern_index = 0;
+		}
+		if (frame_counter == 81) {
+			cavern = caverns[cavern_index];
+			if (cavern_index != best_cavern && cavern.count != 0) {
+				flood_fill(cavern.x, cavern.y, 0, 0, 1);
+			}
+			cavern_index++;
+			if (cavern_index < cavern_count) frame_counter--;
+		}
+		if (frame_counter == 83) {
+			cavern = caverns[best_cavern];
+			printf("%d %d %d %d\n", cavern.rect.x, cavern.rect.y, cavern.rect.w, cavern.rect.h);
+			memset(cell_temp, 0, sizeof(int) * 420 * 200);
+			for (int x = 0; x < cavern.rect.w; x++) {
+				for (int y = 0; y < cavern.rect.h; y++) {
+					cell_temp[x][y] = cell_data[x + cavern.rect.x][y + cavern.rect.y];
+				}
+			}
+			cavern_origin.w = cavern.rect.w;
+			cavern_origin.h = cavern.rect.h;
+			float x_scale = (420.f / (float) cavern.rect.w) * 0.9f;
+			float y_scale = (200.f / (float) cavern.rect.h) * 0.9f;
+			float scale = (x_scale < y_scale) ? x_scale : y_scale;
+			if (scale > 4.f) scale = 4.f;
+			cavern_target.w = (int) ((float) cavern.rect.w * scale);
+			cavern_target.h = (int) ((float) cavern.rect.h * scale);
+			cavern_target.x = (420 - cavern_target.w) / 2;
+			cavern_target.y = (200 - cavern_target.h) / 2;
+			printf("%d %d %d %d\n", cavern_target.x, cavern_target.y, cavern_target.w, cavern_target.h);
+		}
+		if (frame_counter == 85) {
+			if (cavern.rect.x > cavern_target.x) cavern.rect.x--;
+			if (cavern.rect.x < cavern_target.x) cavern.rect.x++;
+			if (cavern.rect.y > cavern_target.y) cavern.rect.y--;
+			if (cavern.rect.y < cavern_target.y) cavern.rect.y++;
+			if (cavern.rect.w > cavern_target.w) cavern.rect.w--;
+			if (cavern.rect.w < cavern_target.w) cavern.rect.w++;
+			if (cavern.rect.h > cavern_target.h) cavern.rect.h--;
+			if (cavern.rect.h < cavern_target.h) cavern.rect.h++;
+			cave_clear(1);
+			float scale_x = (float) cavern_origin.w / (float) cavern.rect.w;
+			float scale_y = (float) cavern_origin.h / (float) cavern.rect.h;
+			for (int x = 0; x < cavern.rect.w; x++) {
+				for (int y = 0; y < cavern.rect.h; y++) {
+					int xt = x * scale_x;
+					int yt = y * scale_y;
+					cell_data[x + cavern.rect.x][y + cavern.rect.y] = cell_temp[xt][yt];
+				}
+			}
+//			printf("%d %d %d %d\n", cavern.rect.x, cavern.rect.y, cavern.rect.w, cavern.rect.h);
+			if (cavern.rect.x != cavern_target.x ||
+				cavern.rect.y != cavern_target.y ||
+				cavern.rect.h != cavern_target.h ||
+				cavern.rect.w != cavern_target.w 
+			) frame_counter--;
+			else printf("%d %d %d %d\n", cavern.rect.x, cavern.rect.y, cavern.rect.w, cavern.rect.h);
+		}
+		if (frame_counter > 100 && frame_counter % 4 == 0) {
+			cave_wall_update();
 		}
 
 
