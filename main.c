@@ -113,6 +113,9 @@ void caverns_clear() {
 	cavern_index = 0;
 	for (int i = 0; i < 256; i++) caverns[i].count = 0;
 }
+int cavern_mod_frames;
+float cavern_mod[4];
+float cavern_scale[4];
 
 // return 0 if no cell found
 cavern_struct cave_fill_cavern() {
@@ -195,15 +198,22 @@ int main(int argc, char* args[]) {
 			printf("\n\ncell seed: %d\n", cell_seed);
 			cave_new_noise();
 			caverns_clear();
-			best_cavern = 0;
+			best_cavern = -1;
 		}
+		// process noise
 		else if (frame_counter > 30 && frame_counter < 60 && frame_counter % 4 == 0) {
 			cave_wall_update();
 		}
+		// find all unique caverns
 		if (frame_counter == 75) {
 			cavern = cave_fill_cavern();
 			if (cavern.count) {
-				printf("%d ", cavern.count);
+//				printf("%d ", cavern.count);
+				if (cavern.count < 2500) {
+					if (cavern.count > caverns[best_cavern].count) {
+						best_cavern = cavern_index;
+					}
+				}
 				caverns[cavern_index] = cavern;
 				cavern_index++;
 				frame_counter--;
@@ -214,39 +224,25 @@ int main(int argc, char* args[]) {
 				cavern_index = 0;
 			}
 		}
+		// highlight chosen cavern
 		if (frame_counter == 76) {
-			cavern = caverns[cavern_index];
-			if (cavern.count) {
-				if (cavern.count > 2500) {
-					flood_fill(cavern.x, cavern.y, 0, 2, 1);
-					caverns[cavern_index].count = 0;
-				}
-				else flood_fill(cavern.x, cavern.y, 0, 2, 0);
-				cavern_index++;
-				frame_counter--;
-			}
-		}
-		if (frame_counter == 80) {
-			int temp_size = 0;
-			for (int i = 0; i < 256; i++) {
-				cavern = caverns[i];
-				if (cavern.count > temp_size) {
-					temp_size = cavern.count;
-					best_cavern = i;
-				}
-			}
 			printf("best cavern: %d\n", best_cavern);
+			cavern = caverns[best_cavern];
+			flood_fill(cavern.x, cavern.y, 0, 2, 0);
 			cavern_index = 0;
 		}
-		if (frame_counter == 81) {
+		// remove all other caverns
+		if (frame_counter == 79) {
 			cavern = caverns[cavern_index];
-			if (cavern_index != best_cavern && cavern.count != 0) {
-				flood_fill(cavern.x, cavern.y, 0, 0, 1);
+			if (cavern_index != best_cavern) {
+				flood_fill(cavern.x, cavern.y, 0, 2, 1);
+				//printf("%d ", cavern.count);
 			}
 			cavern_index++;
 			if (cavern_index < cavern_count) frame_counter--;
 		}
-		if (frame_counter == 83) {
+		// set target rect for final cavern
+		if (frame_counter == 84) {
 			cavern = caverns[best_cavern];
 			printf("%d %d %d %d\n", cavern.rect.x, cavern.rect.y, cavern.rect.w, cavern.rect.h);
 			memset(cell_temp, 0, sizeof(int) * 420 * 200);
@@ -255,10 +251,12 @@ int main(int argc, char* args[]) {
 					cell_temp[x][y] = cell_data[x + cavern.rect.x][y + cavern.rect.y];
 				}
 			}
+			cavern_origin.x = cavern.rect.x;
+			cavern_origin.y = cavern.rect.y;
 			cavern_origin.w = cavern.rect.w;
 			cavern_origin.h = cavern.rect.h;
-			float x_scale = (420.f / (float) cavern.rect.w) * 0.9f;
-			float y_scale = (200.f / (float) cavern.rect.h) * 0.9f;
+			float x_scale = (420.f / (float) cavern.rect.w) * 0.8f;
+			float y_scale = (200.f / (float) cavern.rect.h) * 0.8f;
 			float scale = (x_scale < y_scale) ? x_scale : y_scale;
 			if (scale > 4.f) scale = 4.f;
 			cavern_target.w = (int) ((float) cavern.rect.w * scale);
@@ -266,16 +264,24 @@ int main(int argc, char* args[]) {
 			cavern_target.x = (420 - cavern_target.w) / 2;
 			cavern_target.y = (200 - cavern_target.h) / 2;
 			printf("%d %d %d %d\n", cavern_target.x, cavern_target.y, cavern_target.w, cavern_target.h);
+			// use for frame counter
+			cavern_index = 0;
+			cavern_mod_frames = 45;
+			cavern_mod[0] = (cavern_target.x - cavern_origin.x) / (float) cavern_mod_frames;
+			cavern_mod[1] = (cavern_target.y - cavern_origin.y) / (float) cavern_mod_frames;
+			cavern_mod[2] = (cavern_target.w - cavern_origin.w) / (float) cavern_mod_frames;
+			cavern_mod[3] = (cavern_target.h - cavern_origin.h) / (float) cavern_mod_frames;
+			cavern_scale[0] = cavern_origin.x;
+			cavern_scale[1] = cavern_origin.y;
+			cavern_scale[2] = cavern_origin.w;
+			cavern_scale[3] = cavern_origin.h;
 		}
+		// animate cavern to center while scaling
 		if (frame_counter == 85) {
-			if (cavern.rect.x > cavern_target.x) cavern.rect.x--;
-			if (cavern.rect.x < cavern_target.x) cavern.rect.x++;
-			if (cavern.rect.y > cavern_target.y) cavern.rect.y--;
-			if (cavern.rect.y < cavern_target.y) cavern.rect.y++;
-			if (cavern.rect.w > cavern_target.w) cavern.rect.w--;
-			if (cavern.rect.w < cavern_target.w) cavern.rect.w++;
-			if (cavern.rect.h > cavern_target.h) cavern.rect.h--;
-			if (cavern.rect.h < cavern_target.h) cavern.rect.h++;
+			cavern.rect.x = cavern_scale[0] += cavern_mod[0];
+			cavern.rect.y = cavern_scale[1] += cavern_mod[1];
+			cavern.rect.w = cavern_scale[2] += cavern_mod[2];
+			cavern.rect.h = cavern_scale[3] += cavern_mod[3];
 			cave_clear(1);
 			float scale_x = (float) cavern_origin.w / (float) cavern.rect.w;
 			float scale_y = (float) cavern_origin.h / (float) cavern.rect.h;
@@ -287,11 +293,8 @@ int main(int argc, char* args[]) {
 				}
 			}
 //			printf("%d %d %d %d\n", cavern.rect.x, cavern.rect.y, cavern.rect.w, cavern.rect.h);
-			if (cavern.rect.x != cavern_target.x ||
-				cavern.rect.y != cavern_target.y ||
-				cavern.rect.h != cavern_target.h ||
-				cavern.rect.w != cavern_target.w 
-			) frame_counter--;
+			cavern_index++;
+			if (cavern_index < cavern_mod_frames) frame_counter--;
 			else printf("%d %d %d %d\n", cavern.rect.x, cavern.rect.y, cavern.rect.w, cavern.rect.h);
 		}
 		if (frame_counter > 100 && frame_counter % 4 == 0) {
