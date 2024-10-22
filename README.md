@@ -67,17 +67,19 @@ Quad the Size (4x) : 1680x800
 
 hardware limitations: resizing the pixel density costs one visible frame of the old pixel density in the new pixel density; if new one is bigger missing data is filled with noise
 
-### 4 Video Modes?
+### how many Video Modes?
 each mode has 84,000 pixels with a different pixel aspect ratio
 
 | id | width | height | dar | par | potential tile size | tile fill |
 | :---: | ---: | ---: | :---: | ---: | :---: | :---: |
-| 0 | 420 | 200 | 21/10 | 1.18125 | 10x10 | 42x20 |
-| x | 400 | 210 | 40/21 | 1.07143 | 10x10 | 40x21 |
-| x | 388 | 216 | 97/54 | 1.01042 | w/e | gross |
-| 2 | 375 | 224 | gross | 0.94168 | 15x16 | 25x14 |
-| 3 | 350 | 240 | 35/24 | 0.82031 | 10x16 | 35x15 | 
-| x | 336 | 250 | gross | 0.74404 | 8x10  | 42x25 |
-| x | 328 | 256 | 41/32 | 0.78048 |  8x8  | 41x32 |
+| 0 | 525 | 160 |105/32 | 1.84570 | 25x10 | 21x16 |
+| 1 | 480 | 175 | 96/36 | 1.54285 | 10x5  | 48x36 |
+| 2 | 420 | 200 | 21/10 | 1.18125 | 10x8  | 42x50 |
+| 3 | 400 | 210 | 40/21 | 1.07143 | 10x10 | 40x21 | 
+| 4 | 375 | 224 | gross | 0.94168 | 15x16 | 25x14 |
+| 5 | 350 | 240 | 35/24 | 0.82031 | 10x16 | 35x15 | 
+| 6 | 336 | 250 | gross | 0.74404 | 8x10  | 42x25 |
+| 7 | 300 | 280 | 15/14 | 0.60267 | 10x10 | 30x28 |
+
 
 
