@@ -81,5 +81,5 @@ each mode has 84,000 pixels with a different pixel aspect ratio
 | 6 | 336 | 250 | gross | 0.74404 | 8x10  | 42x25 |
 | 7 | 300 | 280 | 15/14 | 0.60267 | 10x10 | 30x28 |
 
-
-
+#### moar chr rom fonts (aquarius)
+https://www.gridsagegames.com/rexpaint/resources.html#Fonts
